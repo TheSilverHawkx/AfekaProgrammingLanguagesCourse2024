@@ -1,0 +1,37 @@
+<program> ::= <statements>
+
+<statements> ::= <function_declaration><statements> | <expression><statements>
+
+<function_declaration> ::= "Defun" "{" "'name':" <identifier> "," "'arguments':" "(" <parameter_list> ")" "}" <expression>
+
+<lambda_expression> ::= "Lambd" <identifier> "." <expression>
+
+<parameter_list> ::= <identifier> | <identifier> "," <parameter_list>
+
+<expression> ::= <binary_operation>
+               | "(" <lambda_expression> ")"
+               | <unary_operation>
+               | "(" <expression> ")"
+               | <identifier>
+               | <integer>
+
+<binary_operation>  ::= <expression> <binary_operator> <expression>
+<binary_operator>   ::= "+" | "-" | "*" | "/" | "%" | '&&' | '||' | "==" | "!=" | ">" | "<" | ">=" | "<="
+
+<unary_operation>   ::= <function_call> | <not_operation>
+<not_operation>     ::= '!'<expression> | '!'<identifier>
+
+<integer>    ::= <digit> | <integer><digit>
+<identifier> ::= <letter>
+               | <letter><identifier>
+               | <identifier><integer>
+               | <identifier><integer><identifier>
+
+
+<digit>   ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+<letter>  ::= "a" | "b" | ... | "z" | "A" | "B" | ... | "Z" | "_"
+<boolean> ::= "True" | "False"
+
+
+<function_call> ::= <identifier> "(" <argument_list> ")"
+<argument_list> ::= <expression> | <expression> "," <argument_list>
