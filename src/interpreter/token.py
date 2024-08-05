@@ -2,16 +2,16 @@ from enum import Enum
 
 class TokenType(Enum):
     # Boolean Operations:
+    NOT             = '!'
     AND             = '&&'
     OR              = '||'
-    NOT             = '!'
     # Comparison Operations
     EQUAL           = '=='
-    NOT_EQUAl       = '!='
-    GREATER_THAN    = '>'
-    LESS_THAN       = '<'
+    NOT_EQUAL       = '!='
     GREATER_THAN_EQ = '>='
     LESS_THAN_EQ    = '<='  
+    GREATER_THAN    = '>'
+    LESS_THAN       = '<'
     # Single-character token types
     PLUS            = '+'
     MINUS           = '-'
@@ -28,17 +28,20 @@ class TokenType(Enum):
     COLON           = ':'
     COMMA           = ','
     # Reserved words
-    LAMBDA          = 'Lambd'
-    FUNCTION_DECL   = 'Defun'
+    LAMBDA          = 'LAMBD'
+    FUNCTION_DECL   = 'DEFUN'
     # MISC
     ID              = 'ID'
     INTEGER_CONST   = 'INTEGER_CONST'
     BOOLEAN_CONST   = 'BOOLEAN_CONST'
     EOF             = 'EOF'
 
+class FunctionConfigurationKey(Enum):
+    NAME        = 'name'
+    ARGUMENTS   = 'arguments'
 
-def _build_keywords_dictionary(first_keyword: TokenType, last_keyword: TokenType):
-    all_token_types = list(TokenType)
+def _build_keywords_dictionary(enum: Enum, first_keyword: TokenType, last_keyword: TokenType):
+    all_token_types = list(enum)
 
     start_index = all_token_types.index(first_keyword)
     end_index   = all_token_types.index(last_keyword) +1
@@ -51,12 +54,19 @@ def _build_keywords_dictionary(first_keyword: TokenType, last_keyword: TokenType
     return reserved_keywords
 
 RESERVED_KEYWORDS = {
-    **_build_keywords_dictionary(TokenType.LAMBDA,TokenType.FUNCTION_DECL),
-    'True': TokenType.BOOLEAN_CONST,
-    'False': TokenType.BOOLEAN_CONST
+    **_build_keywords_dictionary(TokenType, TokenType.LAMBDA,TokenType.FUNCTION_DECL),
+    'TRUE': TokenType.BOOLEAN_CONST,
+    'FALSE': TokenType.BOOLEAN_CONST
 }
 
-BINARY_OPERATIONS = _build_keywords_dictionary(TokenType.AND,TokenType.MODULO)
+LOGICAL_OPERATORS   = _build_keywords_dictionary(TokenType,TokenType.AND,TokenType.OR)
+COMPARE_OPERATORS   = _build_keywords_dictionary(TokenType,TokenType.EQUAL, TokenType.LESS_THAN)
+ADDITION_OPERATORS  = _build_keywords_dictionary(TokenType,TokenType.PLUS,TokenType.MINUS)
+MULT_OPERATORS      = _build_keywords_dictionary(TokenType,TokenType.MUL,TokenType.MODULO)
+BINARY_OPERATIONS = [*LOGICAL_OPERATORS,*COMPARE_OPERATORS,*ADDITION_OPERATORS,*MULT_OPERATORS]
+
+
+FUNCTION_CONFIGURATION_KEYS = _build_keywords_dictionary(FunctionConfigurationKey,FunctionConfigurationKey.NAME,FunctionConfigurationKey.ARGUMENTS)
 
 class Token:
     def __init__(

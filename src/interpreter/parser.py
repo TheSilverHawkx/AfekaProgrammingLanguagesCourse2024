@@ -1,209 +1,325 @@
 from .lexer import Lexer
-from .token import Token,TokenType,BINARY_OPERATIONS
+from .token import COMPARE_OPERATORS, FUNCTION_CONFIGURATION_KEYS, LOGICAL_OPERATORS, FunctionConfigurationKey, Token,TokenType, ADDITION_OPERATORS,MULT_OPERATORS
 from .errors import ParserError,ErrorCode
-from .ast import AST,BinOp,Boolean,FunctionCall,FunctionDecl,Integer,Lambda,NoOp,Param,Program,Statement,Token,TokenType, NotOp
+from .ast import AST,BinOp,Boolean,FunctionCall,FunctionDecl,Integer,Lambda,NoOp,Param,Program,Statement,Token,TokenType, NotOp, UnaryOp, Var
 
 class Parser:
     def __init__(self, lexer: Lexer) -> None:
         self.lexer = lexer
-        self.current_token = self._get_next_token()
+        self.current_token = self.get_next_token()
 
-    def _get_next_token(self) -> Token:
+    def get_next_token(self) -> Token:
         return self.lexer.get_next_token()
     
-    def _error(self,error_code: ErrorCode, token: Token) -> None:
+    def error(self,error_code: ErrorCode, token: Token) -> None:
         raise ParserError(
             error_code=error_code,
             token=token,
             message=f'{error_code.value} -> {token}',
         )
     
-    def _eat(self, token_type: TokenType):
+    def eat(self, token_type: TokenType):
         """
         Validate the `TokenType` of `current_token`.
         If `current_token` type matches `token_type`: get the next token from the lexer,
         otherwise: throw an error        
         """
         if self.current_token.type == token_type:
-            self.current_token = self._get_next_token()
+            self.current_token = self.get_next_token()
         else:
-            self._error(
+            self.error(
                 error_code=ErrorCode.UNEXPECTED_TOKEN,
                 token=self.current_token
             )
 
-    def _program(self) -> Program:
-        """program: statements"""
-        statements = self._statements()
+    def program(self) -> Program:
+        """
+        <program> ::= <statement_list>
+        """
+        statements = self.statement_list()
 
         return Program(statements)
-
-    def _statements(self) -> list[Statement]:
+    
+    def statement_list(self) -> list[Statement]:
         """
-        statements: function_declaration statements | expression statements
+        <statement_list> ::= <statement> | <statement> <statement_list>
         """
-        statements = []
+        results = []
 
-        while self.current_token is not None:
-            if self.current_token.type == TokenType.FUNCTION_DECL:
-                statements.append(self._function_declaration())    
+        while self.current_token is not None and self.current_token.type != TokenType.EOF:
+            results.append(self.statement())
+
+        return results 
+
+    def empty(self) -> NoOp:
+        """An empty node"""
+        return NoOp()
+    
+    def statement(self) -> AST:
+        """
+        <statement> ::= <empty>
+                      | <lambda_decleration>
+                      | <function_declaration>
+                      | <expression> 
+        """
+        if self.current_token.type == TokenType.LAMBDA:
+            return self.lambda_declaration()
+        elif self.current_token.type == TokenType.FUNCTION_DECL:
+            return self.function_declaration()
+        elif self.current_token.type in (
+            TokenType.ID,
+            TokenType.BOOLEAN_CONST,
+            TokenType.INTEGER_CONST,
+            TokenType.LPAREN,
+            TokenType.PLUS,
+            TokenType.NOT,
+            TokenType.MINUS
+            ):
+            return self.logical_expr()
+        else:
+            return self.empty()
+
+    def function_declaration(self) -> FunctionDecl:
+        """
+        <function_declaration> ::= "Defun" "{" <function_conf_name> "," <function_conf_args> "}"
+                         | "Defun" "{" <function_conf_args> "," <function_conf_name> "}"
+
+        <function_conf_name> ::= "'" "name" "'" ":" "'" ID "'"
+        <function_conf_args> ::= "'" "arguments" "'" ":" "(" <formal_parameter_list> ")"
+        """
+        self.eat(TokenType.FUNCTION_DECL)
+        self.eat(TokenType.LCURL)
+
+        while self.current_token is not None and self.current_token.type is not TokenType.RCURL:
+            self.eat(TokenType.QUOTE)
+
+            if self.current_token.value not in FUNCTION_CONFIGURATION_KEYS:
+                self.error(
+                    error_code=ErrorCode.UNEXPECTED_TOKEN,
+                    token=self.current_token
+                )
+
+            key = self.current_token.value
+            self.eat(TokenType.ID)
+            self.eat(TokenType.QUOTE)
+            self.eat(TokenType.COLON)
+
+            if key == FunctionConfigurationKey.NAME.value:
+                self.eat(TokenType.QUOTE)
+
+                if self.current_token.type is not TokenType.ID:
+                    self.error(
+                        error_code=ErrorCode.UNEXPECTED_TOKEN,
+                        token=self.current_token
+                    )
+                
+                function_name = self.current_token.value
+
+                self.eat(TokenType.ID)
+                self.eat(TokenType.QUOTE)
+            
             else:
-                statements.append(self._expression())
-
-        return statements
-
-    def _function_declaration(self) -> FunctionDecl:
-        """
-        <function_declaration> ::= "Defun" "{" "'name':'"<identifier>"'," "'arguments':" "(" <formal_parameters_list> ")" "}" <expression>
-        """
-        self._eat(TokenType.FUNCTION_DECL)
-        self._eat(TokenType.LCURL)
+                self.eat(TokenType.LPAREN)
+                arguments = self.formal_parameters_list()
+                self.eat(TokenType.RPAREN)
+                
+            if self.current_token.type == TokenType.COMMA:
+                self.eat(TokenType.COMMA)
         
-        function_details = {}
-
-        # Match 'name':'<identifier>',
-        self._eat(TokenType.QUOTE)
-
-        if self.current_token.value != "name":
-            self._error(
-                error_code=ErrorCode.UNEXPECTED_TOKEN,
-                token=self.current_token
-            )
-
-        self._eat(TokenType.ID)
-        self._eat(TokenType.QUOTE)
-        self._eat(TokenType.COLON)
-
-        self._eat(TokenType.QUOTE)
-        function_details["name"] = self.current_token.value        
-        self._eat(TokenType.ID)
-        self._eat(TokenType.QUOTE)
-        self._eat(TokenType.COMMA)
-
-        # Match 'arguments':(<parameter_list>)}
-        self._eat(TokenType.QUOTE)
-        if self.current_token.value != "arguments":
-            self._error(
-                error_code=ErrorCode.UNEXPECTED_TOKEN,
-                token=self.current_token
-            )
-
-        self._eat(TokenType.QUOTE)
-        self._eat(TokenType.COLON)
-        self._eat(TokenType.LPAREN)
-        function_details["params"] = self._formal_parameters_list()
-        self._eat(TokenType.RPAREN)
-        self._eat(TokenType.RCURL)
-        
+        self.eat(TokenType.RCURL)
         # Match function body <expression>
-        function_details['expr_node'] = self._expression()
+        expr_node = self.logical_expr()
 
-        return FunctionDecl(**function_details)
+        return FunctionDecl(
+            name=function_name,
+            params=arguments,
+            expr_node= expr_node
+        )
 
-    def _expression(self):
+
+    def formal_parameters_list(self) -> list[Param]:
         """
-        expression: binary_operation | lambda_expression | unary_operation | (expression) | identifier | integer
+        <formal_parameter_list> ::= <identifier> | <identifier> ',' | <identifier> ',' <formal_parameter_list>
         """
-        # Handle binary operations
-        if self.current_token.type == TokenType.INTEGER_CONST:
-            node = self._binary_operation()
-            
-        
-        # Handle NOT opeartion
-        elif self.current_token.type == TokenType.NOT:
-            node = self._not_operation()
-        
-        
-            node = self._lambda()
+        params = []
 
-        # Handle parenthesized expression
-        elif self.current_token.type == TokenType.LPAREN:
-            self._eat(TokenType.LPAREN)
+        while self.current_token.type == TokenType.ID:
+            params.append(Param(self.current_token))
+            self.eat(TokenType.ID)
 
-            # Handle Lambda expression
-            if self.current_token.type == TokenType.LAMBDA:
-                node = self._lambda()
+            if self.current_token.type == TokenType.COMMA:
+                self.eat(TokenType.COMMA)
             else:
-                node = self._expression()
-            self._eat(TokenType.RPAREN)
+                break
+
+        return params
+
+    def logical_expr(self) -> AST:
+        """
+        <logical_expr> ::= <logical_expr> <binary_op> <logical_expr>
+                         | ! <logical_expr>
+                         | "(" <logical_expr> ")"
+                         | <compare_expr>
+        """
         
+        if self.current_token.type == TokenType.NOT:
+            self.eat(TokenType.NOT)
+            node = NotOp(expr=self.logical_expr())
+
+        elif self.current_token.type == TokenType.LPAREN:
+            self.eat(TokenType.LPAREN)
+            node = self.logical_expr()
+            self.eat(TokenType.RPAREN)
+
+        elif self.lexer.peek_next_token().type in LOGICAL_OPERATORS:           
+            node = self.logical_expr()
+            while self.current_token is not None and self.current_token.type in LOGICAL_OPERATORS:               
+                op_token = self.current_token
+                if self.current_token.type == TokenType.AND:
+                    self.eat(TokenType.AND)
+                elif self.current_token.type == TokenType.OR:
+                    self.eat(TokenType.OR)
+                
+                node = BinOp(left=node, op=op_token,right=self.logical_expr())
         else:
-            node = self._function_call()
-        
+            node = self.compare_expr()
+
         return node
+    
+    def compare_expr(self) -> AST:
+        """
+        <compare_expr> ::= <additive_expr> | <additive_expr> <compare_op> <additive_expr>
+        """
 
-    def _formal_parameters_list(self) -> list[Param]:
-        pass
+        left = self.additive_expr()
 
-    def _actual_parameters_list(self) -> list[AST]:
-        """actual_parameters_list : expression | expression,actual_parameters_list"""
-        actual_params = []
-
-        if self.current_token.type != TokenType.RPAREN:
-            actual_params.append(self._expression())
-
-        while self.current_token.type == TokenType.COMMA:
-            self._eat(TokenType.COMMA)
-            actual_params.append(self._expression())
-
-        self._eat(TokenType.RPAREN)
-
-        return actual_params
-            
-
-    def _not_operation(self):
-        """not_operation: !expression | !identifier"""
-        self._eat(TokenType.NOT)
-
-        if self.current_token.type == TokenType.ID:
-            return NotOp(self.current_token)
+        op_token = self.current_token
+        
+        if op_token.type in COMPARE_OPERATORS:
+            self.eat(op_token.type)
         else:
-            return NotOp(self._expression())       
+            return left
+        
+        return BinOp(left=left,op=op_token,right=self.additive_expr())
+        
+    def additive_expr(self) -> AST:
+        """
+        <additive_expr> ::= <multiplicative_expr> | <multiplicative_expr> <addition_op> <additive_expr>
+        """
 
-    def _binary_operation(self) -> BinOp:
-        left_value = self.current_token
-        self._eat(TokenType.ID)
+        left = self.multiplicative_expr()
 
-    def _lambda(self) -> Lambda:
-        """lambda_expression : Lambd identifier. expression"""
-        self._eat(TokenType.LAMBDA)
+        while self.current_token is not None and self.current_token.type in ADDITION_OPERATORS:
+            op_token = self.current_token
+            self.eat(op_token.type)
+
+            left = BinOp(left=left,op=op_token,right=self.additive_expr())
+        
+        return left
+        
+    def multiplicative_expr(self) -> AST:
+        """
+        <multiplicative_expr> ::= <factor>
+                                | <factor> <mult_op> <multiplicative_expr>
+                                | <addition_op> <factor>
+        """
+
+        if self.current_token.type in (TokenType.PLUS, TokenType.MINUS):
+            return UnaryOp(self.current_token,self.factor())
+        
+        left = self.factor()
+
+        while self.current_token is not None and self.current_token.type in MULT_OPERATORS:
+            op_token = self.current_token
+            self.eat(op_token.type)
+
+            left = BinOp(left=left, op=op_token,right=self.multiplicative_expr())
+
+        return left
+    
+    def factor(self):
+        """
+        <factor> ::= <integer>
+                   | <boolean>
+                   | <function_call>
+        """
+        token = self.current_token
+        if token.type == TokenType.BOOLEAN_CONST:
+            self.eat(TokenType.BOOLEAN_CONST)
+            return Boolean(token)
+        
+        elif token.type == TokenType.INTEGER_CONST:
+            self.eat(TokenType.INTEGER_CONST)
+            return Integer(token)
+        
+        elif token.type == TokenType.ID:
+            return self.function_call()
+        
+        else:
+            self.error(
+                error_code=ErrorCode.UNEXPECTED_TOKEN,
+                token=token
+            )
+        
+    def lambda_declaration(self) -> Lambda:
+        """
+        <lambda_decleration> ::= "Lambd" <identifier> "." <expression>
+        """
+        self.eat(TokenType.LAMBDA)
 
         param = self.current_token.value
-        self._eat(TokenType.ID)
-        self._eat(TokenType.DOT)
+        self.eat(TokenType.ID)
+        self.eat(TokenType.DOT)
 
-        node = self._expression()
+        node = self.logical_expr()
 
         return Lambda(
             param=param,
             expr_node=node
         )
 
-    def _function_call(self) -> FunctionCall:
-        """function_call: identifier(actual_parameters_list)"""
-        func_name = self.current_token.value
-        self._eat(TokenType.ID)
-        self._eat(TokenType.LPAREN)
+    def function_call(self) -> FunctionCall:
+        """
+        <function_call> ::= ID "(" <function_call_parameters> ")"
+        """
+        token = self.current_token
+        self.eat(TokenType.ID)
+        self.eat(TokenType.LPAREN)
 
-        params = self._actual_parameters_list()
+        params = self.function_call_parameters()
+        self.eat(TokenType.RPAREN)
         
         return FunctionCall(
-            func_name=func_name,
             actual_params=params,
-            token=self.current_token
+            token=token
         )
+    
+    def function_call_parameters(self) -> list[AST]:
+        """
+        <function_call_parameters> ::= <logical_expr>
+                                     | <logical_expr> ","
+                                     | <logical_expr> "," <function_call_parameters>
+                                     | <empty>
+        """
+        actual_params = []
 
+        while self.current_token is not None and self.current_token.type != TokenType.RPAREN:
+            actual_params.append(self.logical_expr())
 
+            if self.current_token.type == TokenType.COMMA:
+                self.eat(TokenType.COMMA)
 
+        return actual_params
+    
     def parse(self) -> Program:
         """
         Parse input code into AST tree for execution
         """
 
-        node = self._program()
+        node = self.program()
 
         if self.current_token.type != TokenType.EOF:
-            self._error(
+            self.error(
                 error_code=ErrorCode.UNEXPECTED_TOKEN,
                 token=self.current_token
             )

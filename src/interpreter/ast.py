@@ -33,18 +33,22 @@ class BinOp(AST):
         self.token = self.op = op
         self.right = right
 
+class UnaryOp(AST):
+    """ Unary Operation AST Node"""
+    def __init__(self, op, expr):
+        self.token = self.op = op
+        self.expr = expr
+
 class NotOp(AST):
     """ Not Operation AST Node"""
-    def __init__(self,token: Token, expr: AST) -> None:
-        self.token = token
+    def __init__(self,expr: AST) -> None:
         self.expr = expr
 
 class Param(AST):
     """ Function Parameter AST Node"""
-    def __init__(self,var_node, type_node) -> None:
-        self.var_node = var_node
-        self.type_node = type_node
-
+    def __init__(self, token: Token) -> None:
+        self.token = token
+        self.name = token.value
 
 class FunctionDecl(AST):
     """ Function Declaration AST Node"""
@@ -54,10 +58,10 @@ class FunctionDecl(AST):
         self.expr_node = expr_node
     
 class FunctionCall(AST):
-    def __init__(self, func_name: str, actual_params, token) -> None:
-        self.func_name = func_name
-        self.actual_params = actual_params
+    def __init__(self, token: Token, actual_params ) -> None:
         self.token = token
+        self.func_name = token.value
+        self.actual_params = actual_params
         self.func_symbol = None
 
 class Lambda(AST):

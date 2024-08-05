@@ -1,5 +1,9 @@
-from .token import Token,TokenType,RESERVED_KEYWORDS
+from .token import FUNCTION_CONFIGURATION_KEYS, Token,TokenType,RESERVED_KEYWORDS
 from .errors import LexerError
+from ast import literal_eval
+
+IS_ALPHABETIC = lambda char: char.isalpha()
+IS_ALPHANUMERIC = lambda char: char.isalnum()
 
 class Lexer:
     def __init__(self, text: str) -> None:
@@ -7,14 +11,14 @@ class Lexer:
         self.pos = 0
         self.current_char = self.text[self.pos]
         self.lineno = 1
-        self.cloumn = 1
+        self.column = 1
     
-    def error(self) -> None:
+    def _error(self) -> None:
         raise LexerError(
             "Lexer error on '{lexeme}' line: {lineno} column: {column}".format(
                 lexeme = self.current_char,
                 lineno= self.lineno,
-                column = self.cloumn
+                column = self.column
             )
         )
     
@@ -25,7 +29,7 @@ class Lexer:
 
         if self.current_char == '\n':
             self.lineno +=1
-            self.cloumn = 0
+            self.column = 0
 
         self.pos += 1
 
@@ -34,7 +38,13 @@ class Lexer:
             self.current_char = None
         else:
             self.current_char = self.text[self.pos]
-            self.cloumn += 1
+            self.column += 1
+
+    def advance_if_match(self, char:str) -> None:
+        if self.current_char == char:
+            self.advance()
+        else:
+            self._error()
 
     def peek(self) -> str:
         """
@@ -43,6 +53,18 @@ class Lexer:
         peek_pos = self.pos + 1
 
         return self.text[peek_pos] if peek_pos <= len(self.text) - 1 else None
+    
+    def peek_next_token(self) -> Token:
+        origin_pos = self.pos
+        origin_lineo = self.lineno
+        origin_column = self.column
+
+        token = self.get_next_token()
+        self.pos = origin_pos
+        self.lineno = origin_lineo
+        self.column = origin_column
+
+        return token
     
     def skip_whitespace(self) -> None:
         """
@@ -64,59 +86,43 @@ class Lexer:
         Returns a full identifier (multi-digit number, reserved keyword, etc.) from `text` based on a `condition` function.
         """
         result = ''
-        while self.current_char is not None and condition():
+        while self.current_char is not None and condition(self.current_char):
             result += self.current_char
             self.advance()
         
         return result
 
-    def _integer(self) -> Token:
+    def integer(self) -> Token:
         """
         Return a multi-digit poitive integer consumed from `text`.
         """
-        result = self.__get_multichar_by_condition(self.current_char.isdigit)
-        # while self.current_char is not None and self.current_char.isdigit():
-        #     result += self.current_char
-        #     self.advance()
+        token = Token(type=TokenType.INTEGER_CONST, value=None, lineno=self.lineno, column=self.column)
 
-        return Token(
-            type=TokenType.INTEGER_CONST,
-            value=int(result),
-            lineno=self.lineno,
-            column=self.cloumn
-        )
+        result = self.__get_multichar_by_condition(self.current_char.isdigit)
+
+        token.value = int(result)
+
+        return token
         
-    def _id(self) -> Token:
+    def id(self) -> Token:
         """
         Handle identifiers (e.g. function call) and reserved keywords
         """
+        token = Token(type=None, value=None, lineno=self.lineno, column=self.column)
 
-        value = self.__get_multichar_by_condition(self.current_char.isalnum).upper()
+        value = self.__get_multichar_by_condition(IS_ALPHANUMERIC)
+        value_upper = value.upper()
 
-        # value = ''
-        # while self.current_char is not None and self.current_char.isalnum():
-        #     value += self.current_char
-        #     self.advance
-
-        token_type = RESERVED_KEYWORDS.get(value) if RESERVED_KEYWORDS.get(value) else TokenType.ID
+        token_type = RESERVED_KEYWORDS.get(value_upper) if RESERVED_KEYWORDS.get(value_upper) else TokenType.ID
 
         if token_type is TokenType.BOOLEAN_CONST:
-            value = True if value == 'TRUE' else False
+            value = True if value_upper == 'TRUE' else False
 
-        return Token(
-            type=token_type,
-            value=value,
-            lineno=self.lineno,
-            column=self.cloumn
-        )
-    
-    def peek_next_token(self) -> Token:
-        origin_pos = self.pos
-        token = self.get_next_token()
-        self.pos = origin_pos
+        token.type = token_type
+        token.value = value
 
         return token
-
+        
     def get_next_token(self) -> Token:
         """
         Tokenizer (Lexican Analyzer) Method.
@@ -131,31 +137,50 @@ class Lexer:
                 continue
             
             # Handle comments
-            if self.current_char == TokenType.COMMENT:
+            if self.current_char == TokenType.COMMENT.value:
                 self.advance()
                 self.skip_comment()
                 continue
-
+            
             # Handle identifiers (functions / reserved keywords)
             if self.current_char.isalpha():
-                return self._id()
+                return self.id()
             
             # Hanlde constant integers
             if self.current_char.isdigit():
-                return self._integer()
+                return self.integer()
             
+
+            # Handle double-character tokens
+            try:
+                value = self.current_char + str(self.peek())
+                token_type = TokenType(value)
+            except ValueError:
+                pass
+            else:
+                token = Token(
+                    type = token_type,
+                    value=value,
+                    lineno=self.lineno,
+                    column=self.column
+                )
+                self.advance()
+                self.advance()
+                return token
+            
+
             # Handle single-character tokens
             try:
                 token_type = TokenType(self.current_char)
             except ValueError:
                 # Current char is not a defined single-character token
-                self.error()
+                self._error()
             else:
                 token = Token(
                     type = token_type,
                     value=token_type.value,
                     lineno=self.lineno,
-                    column=self.cloumn
+                    column=self.column
                 )
 
                 self.advance()

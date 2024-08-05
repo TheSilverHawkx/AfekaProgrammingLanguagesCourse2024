@@ -1,6 +1,57 @@
-<program> ::= <statements>
+<program> ::= <statement_list>
+<statement_list> ::= <statement> | <statement> <statement_list>
 
-<statements> ::= <function_declaration><statements> | <expression><statements>
+<statement> ::= <empty>
+              | <lambda_decleration>
+              | <function_declaration>
+              | <expression> 
+
+<empty> ::=
+
+<lambda_decleration> ::= "Lambd" <identifier> "." <expression>
+
+<function_declaration> ::= "Defun" "{" <function_conf_name> "," <function_conf_args> "}" <expression>
+                         | "Defun" "{" <function_conf_args> "," <function_conf_name> "}" <expression>
+
+<function_conf_name> ::= "'" "name" "'" ":" "'" ID "'"
+<function_conf_args> ::= "'" "arguments" "'" ":" "(" <formal_parameter_list> ")"
+
+<formal_parameter_list> ::= <identifier> | <identifier> ',' | <identifier> ',' <formal_parameter_list>
+
+
+<logical_expr> ::= <logical_expr> <binary_op> <logical_expr>
+                 | ! <logical_expr>
+                 | "(" <logical_expr> ")"
+                 | <compare_expr>
+
+<compare_expr> ::= <additive_expr> | <additive_expr> <compare_op> <additive_expr>
+
+<additive_expr> ::= <multiplicative_expr> | <multiplicative_expr> <addition_op> <additive_expr>
+
+<multiplicative_expr> ::= <factor>
+                        | <factor> <mult_op> <multiplicative_expr>
+                        | <addition_op> <factor>
+
+<factor> ::= <integer>
+           | <boolean>
+           | <function_call>
+
+<binary_op>     ::= "&&" | "||" | "or" | "and"
+<compare_op>    ::= "==" | "!=" | ">" | "<" | ">=" | "<="
+<addition_op>   ::= "+"  | "-" 
+<mult_op>       ::= "*" | "/" | "%"
+
+
+<function_call> ::= ID "(" <function_call_parameters> ")"
+<function_call_parameters> ::= <logical_expr> | <logical_expr> "," | <logical_expr> "," <function_call_parameters> | <empty>
+
+<integer>    ::= INTEGER_CONST
+<identifier> ::= ID
+<boolean>    ::= BOOLEAN_CONST
+
+
+================================
+<statement_list> ::= <function_declaration><statements> | <expression><statements>
 
 <function_declaration> ::= "Defun" "{" "'name':" <identifier> "," "'arguments':" "(" <parameter_list> ")" "}" <expression>
 
@@ -16,7 +67,7 @@
                | <integer>
 
 <binary_operation>  ::= <expression> <binary_operator> <expression>
-<binary_operator>   ::= "+" | "-" | "*" | "/" | "%" | '&&' | '||' | "==" | "!=" | ">" | "<" | ">=" | "<="
+
 
 <unary_operation>   ::= <function_call> | <not_operation>
 <not_operation>     ::= '!'<expression> | '!'<identifier>
