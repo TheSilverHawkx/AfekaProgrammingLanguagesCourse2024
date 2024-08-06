@@ -1,9 +1,9 @@
-from .token import FUNCTION_CONFIGURATION_KEYS, Token,TokenType,RESERVED_KEYWORDS
+from .token import Token,TokenType,RESERVED_KEYWORDS
 from .errors import LexerError
-from ast import literal_eval
 
 IS_ALPHABETIC = lambda char: char.isalpha()
 IS_ALPHANUMERIC = lambda char: char.isalnum()
+IS_NUMERIC = lambda char: char.isdigit()
 
 class Lexer:
     def __init__(self, text: str) -> None:
@@ -63,6 +63,7 @@ class Lexer:
         self.pos = origin_pos
         self.lineno = origin_lineo
         self.column = origin_column
+        self.current_char = self.text[origin_pos]
 
         return token
     
@@ -98,7 +99,7 @@ class Lexer:
         """
         token = Token(type=TokenType.INTEGER_CONST, value=None, lineno=self.lineno, column=self.column)
 
-        result = self.__get_multichar_by_condition(self.current_char.isdigit)
+        result = self.__get_multichar_by_condition(IS_NUMERIC)
 
         token.value = int(result)
 
@@ -118,6 +119,16 @@ class Lexer:
         if token_type is TokenType.BOOLEAN_CONST:
             value = True if value_upper == 'TRUE' else False
 
+        elif value_upper == 'AND':
+            token_type = TokenType.AND
+            value = token_type.value
+        elif value_upper == 'OR':
+            token_type = TokenType.OR
+            value = token_type.value
+        elif value_upper == 'NOT':
+            token_type = TokenType.NOT
+            value = token_type.value
+        
         token.type = token_type
         token.value = value
 

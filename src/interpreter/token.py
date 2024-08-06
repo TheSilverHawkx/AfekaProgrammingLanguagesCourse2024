@@ -63,7 +63,7 @@ LOGICAL_OPERATORS   = _build_keywords_dictionary(TokenType,TokenType.AND,TokenTy
 COMPARE_OPERATORS   = _build_keywords_dictionary(TokenType,TokenType.EQUAL, TokenType.LESS_THAN)
 ADDITION_OPERATORS  = _build_keywords_dictionary(TokenType,TokenType.PLUS,TokenType.MINUS)
 MULT_OPERATORS      = _build_keywords_dictionary(TokenType,TokenType.MUL,TokenType.MODULO)
-BINARY_OPERATIONS = [*LOGICAL_OPERATORS,*COMPARE_OPERATORS,*ADDITION_OPERATORS,*MULT_OPERATORS]
+BINARY_OPERATIONS   = [*LOGICAL_OPERATORS,*COMPARE_OPERATORS,*ADDITION_OPERATORS,*MULT_OPERATORS]
 
 
 FUNCTION_CONFIGURATION_KEYS = _build_keywords_dictionary(FunctionConfigurationKey,FunctionConfigurationKey.NAME,FunctionConfigurationKey.ARGUMENTS)

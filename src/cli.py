@@ -44,6 +44,8 @@ def main(args: argparse.Namespace):
     try:
         parser = interpreter.Parser(lexer)
         tree = parser.parse()
+        
+        print(tree)
     except (interpreter.LexerError, interpreter.ParserError) as e:
         print(e.message)
         exit(1)

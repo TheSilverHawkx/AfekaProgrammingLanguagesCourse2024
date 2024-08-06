@@ -5,10 +5,9 @@
               | <lambda_decleration>
               | <function_declaration>
               | <expression> 
+              | "(" <statement> ")"
 
-<empty> ::=
-
-<lambda_decleration> ::= "Lambd" <identifier> "." <expression>
+<lambda_decleration> ::= "(" "Lambd" <identifier> "." <expression> ")"
 
 <function_declaration> ::= "Defun" "{" <function_conf_name> "," <function_conf_args> "}" <expression>
                          | "Defun" "{" <function_conf_args> "," <function_conf_name> "}" <expression>
@@ -19,15 +18,9 @@
 <formal_parameter_list> ::= <identifier> | <identifier> ',' | <identifier> ',' <formal_parameter_list>
 
 
-<logical_expr> ::= <logical_expr> <binary_op> <logical_expr>
-                 | ! <logical_expr>
-                 | "(" <logical_expr> ")"
-                 | <compare_expr>
-
-<compare_expr> ::= <additive_expr> | <additive_expr> <compare_op> <additive_expr>
-
+<logical_expr>  ::= <compare_expr> | <compare_expr> <binary_op> <logical_expr>
+<compare_expr>  ::= <additive_expr> | <additive_expr> <compare_op> <additive_expr>
 <additive_expr> ::= <multiplicative_expr> | <multiplicative_expr> <addition_op> <additive_expr>
-
 <multiplicative_expr> ::= <factor>
                         | <factor> <mult_op> <multiplicative_expr>
                         | <addition_op> <factor>
@@ -35,54 +28,22 @@
 <factor> ::= <integer>
            | <boolean>
            | <function_call>
+           | <identifier>
+           | "(" <logical_expr> ")"
+           | "!" <logical_expr>
+           | "not" <logical_expr>
+
+<function_call> ::= ID "(" <function_call_parameters> ")"
+<function_call_parameters> ::= <logical_expr>
+                             | <logical_expr> ","
+                             | <logical_expr> "," <function_call_parameters>
+                             | <empty>
 
 <binary_op>     ::= "&&" | "||" | "or" | "and"
 <compare_op>    ::= "==" | "!=" | ">" | "<" | ">=" | "<="
 <addition_op>   ::= "+"  | "-" 
 <mult_op>       ::= "*" | "/" | "%"
-
-
-<function_call> ::= ID "(" <function_call_parameters> ")"
-<function_call_parameters> ::= <logical_expr> | <logical_expr> "," | <logical_expr> "," <function_call_parameters> | <empty>
-
-<integer>    ::= INTEGER_CONST
-<identifier> ::= ID
-<boolean>    ::= BOOLEAN_CONST
-
-
-================================
-<statement_list> ::= <function_declaration><statements> | <expression><statements>
-
-<function_declaration> ::= "Defun" "{" "'name':" <identifier> "," "'arguments':" "(" <parameter_list> ")" "}" <expression>
-
-<lambda_expression> ::= "Lambd" <identifier> "." <expression>
-
-<parameter_list> ::= <identifier> | <identifier> "," <parameter_list>
-
-<expression> ::= <binary_operation>
-               | "(" <lambda_expression> ")"
-               | <unary_operation>
-               | "(" <expression> ")"
-               | <identifier>
-               | <integer>
-
-<binary_operation>  ::= <expression> <binary_operator> <expression>
-
-
-<unary_operation>   ::= <function_call> | <not_operation>
-<not_operation>     ::= '!'<expression> | '!'<identifier>
-
-<integer>    ::= <digit> | <integer><digit>
-<identifier> ::= <letter>
-               | <letter><identifier>
-               | <identifier><integer>
-               | <identifier><integer><identifier>
-
-
-<digit>   ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
-<letter>  ::= "a" | "b" | ... | "z" | "A" | "B" | ... | "Z" | "_"
-<boolean> ::= "True" | "False"
-
-
-<function_call> ::= <identifier> "(" <argument_list> ")"
-<argument_list> ::= <expression> | <expression> "," <argument_list>
+<integer>       ::= INTEGER_CONST
+<identifier>    ::= ID
+<boolean>       ::= BOOLEAN_CONST
+<empty>         ::=

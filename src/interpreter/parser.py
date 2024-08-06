@@ -1,7 +1,7 @@
 from .lexer import Lexer
 from .token import COMPARE_OPERATORS, FUNCTION_CONFIGURATION_KEYS, LOGICAL_OPERATORS, FunctionConfigurationKey, Token,TokenType, ADDITION_OPERATORS,MULT_OPERATORS
 from .errors import ParserError,ErrorCode
-from .ast import AST,BinOp,Boolean,FunctionCall,FunctionDecl,Integer,Lambda,NoOp,Param,Program,Statement,Token,TokenType, NotOp, UnaryOp, Var
+from .ast import AST,BinOp,Boolean,FunctionCall,FunctionDecl,Integer,Lambda,NoOp,Param,Program,Token,TokenType, NotOp, UnaryOp
 
 class Parser:
     def __init__(self, lexer: Lexer) -> None:
@@ -40,7 +40,7 @@ class Parser:
 
         return Program(statements)
     
-    def statement_list(self) -> list[Statement]:
+    def statement_list(self) -> list[AST]:
         """
         <statement_list> ::= <statement> | <statement> <statement_list>
         """
@@ -61,11 +61,14 @@ class Parser:
                       | <lambda_decleration>
                       | <function_declaration>
                       | <expression> 
+                      | "(" <statement> ")"
         """
-        if self.current_token.type == TokenType.LAMBDA:
+        if self.current_token.type == TokenType.LPAREN and self.lexer.peek_next_token().type == TokenType.LAMBDA:
             return self.lambda_declaration()
+        
         elif self.current_token.type == TokenType.FUNCTION_DECL:
             return self.function_declaration()
+        
         elif self.current_token.type in (
             TokenType.ID,
             TokenType.BOOLEAN_CONST,
@@ -136,7 +139,6 @@ class Parser:
             expr_node= expr_node
         )
 
-
     def formal_parameters_list(self) -> list[Param]:
         """
         <formal_parameter_list> ::= <identifier> | <identifier> ',' | <identifier> ',' <formal_parameter_list>
@@ -156,35 +158,17 @@ class Parser:
 
     def logical_expr(self) -> AST:
         """
-        <logical_expr> ::= <logical_expr> <binary_op> <logical_expr>
-                         | ! <logical_expr>
-                         | "(" <logical_expr> ")"
-                         | <compare_expr>
-        """
+        <logical_expr> ::= <compare_expr> | <compare_expr> <binary_op> <logical_expr>
+        """        
+        left = self.compare_expr()
+
+        while self.current_token is not None and self.current_token.value in LOGICAL_OPERATORS:
+            op_token = self.current_token
+            self.eat(op_token.type)
+
+            left = BinOp(left=left,op=op_token,right=self.compare_expr())
         
-        if self.current_token.type == TokenType.NOT:
-            self.eat(TokenType.NOT)
-            node = NotOp(expr=self.logical_expr())
-
-        elif self.current_token.type == TokenType.LPAREN:
-            self.eat(TokenType.LPAREN)
-            node = self.logical_expr()
-            self.eat(TokenType.RPAREN)
-
-        elif self.lexer.peek_next_token().type in LOGICAL_OPERATORS:           
-            node = self.logical_expr()
-            while self.current_token is not None and self.current_token.type in LOGICAL_OPERATORS:               
-                op_token = self.current_token
-                if self.current_token.type == TokenType.AND:
-                    self.eat(TokenType.AND)
-                elif self.current_token.type == TokenType.OR:
-                    self.eat(TokenType.OR)
-                
-                node = BinOp(left=node, op=op_token,right=self.logical_expr())
-        else:
-            node = self.compare_expr()
-
-        return node
+        return left
     
     def compare_expr(self) -> AST:
         """
@@ -195,7 +179,7 @@ class Parser:
 
         op_token = self.current_token
         
-        if op_token.type in COMPARE_OPERATORS:
+        if op_token.value in COMPARE_OPERATORS:
             self.eat(op_token.type)
         else:
             return left
@@ -209,7 +193,7 @@ class Parser:
 
         left = self.multiplicative_expr()
 
-        while self.current_token is not None and self.current_token.type in ADDITION_OPERATORS:
+        while self.current_token is not None and self.current_token.value in ADDITION_OPERATORS:
             op_token = self.current_token
             self.eat(op_token.type)
 
@@ -229,7 +213,7 @@ class Parser:
         
         left = self.factor()
 
-        while self.current_token is not None and self.current_token.type in MULT_OPERATORS:
+        while self.current_token is not None and self.current_token.value in MULT_OPERATORS:
             op_token = self.current_token
             self.eat(op_token.type)
 
@@ -242,18 +226,37 @@ class Parser:
         <factor> ::= <integer>
                    | <boolean>
                    | <function_call>
+                   | <identifier>
+                   | "(" <logical_expr> ")"
+                   | "!" <logical_expr>
+                   | "not" <logical_expr>
         """
         token = self.current_token
+
+        if token.type == TokenType.NOT:
+            self.eat(TokenType.NOT)
+            return NotOp(self.logical_expr())
+
         if token.type == TokenType.BOOLEAN_CONST:
             self.eat(TokenType.BOOLEAN_CONST)
             return Boolean(token)
+        
+        #% verify this works now
+        elif self.current_token.type == TokenType.LPAREN:
+            self.eat(TokenType.LPAREN)
+            node = self.logical_expr()
+            self.eat(TokenType.RPAREN)
+            return node
         
         elif token.type == TokenType.INTEGER_CONST:
             self.eat(TokenType.INTEGER_CONST)
             return Integer(token)
         
-        elif token.type == TokenType.ID:
+        elif token.type == TokenType.ID and self.lexer.peek_next_token().type == TokenType.LPAREN:
             return self.function_call()
+        elif token.type == TokenType.ID:
+            self.eat(TokenType.ID)
+            return Param(token)
         
         else:
             self.error(
@@ -263,15 +266,17 @@ class Parser:
         
     def lambda_declaration(self) -> Lambda:
         """
-        <lambda_decleration> ::= "Lambd" <identifier> "." <expression>
+        <lambda_decleration> ::= "(" "Lambd" <identifier> "." <statement> ")"
         """
+        self.eat(TokenType.LPAREN)
         self.eat(TokenType.LAMBDA)
 
-        param = self.current_token.value
+        param = Param(self.current_token)
         self.eat(TokenType.ID)
         self.eat(TokenType.DOT)
 
-        node = self.logical_expr()
+        node = self.statement()
+        self.eat(TokenType.RPAREN)
 
         return Lambda(
             param=param,
