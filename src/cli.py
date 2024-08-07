@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 from os.path import exists,isfile
-import interpreter
+import interpreter as intrprt
 
 def configure_parameters() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -40,25 +40,26 @@ def main(args: argparse.Namespace):
 
     content = open(args.input_file,'r').read()
 
-    lexer = interpreter.Lexer(content)
+    lexer = intrprt.Lexer(content)
     try:
-        parser = interpreter.Parser(lexer)
+        parser = intrprt.Parser(lexer)
         tree = parser.parse()
         
+        semantic_analyzer = intrprt.SemanticAnalyzer() #args.scope
+        try:
+            semantic_analyzer.visit(tree)
+        except intrprt.SemanticError as e:
+            print(e.message)
+            exit(1)
+
         print(tree)
-    except (interpreter.LexerError, interpreter.ParserError) as e:
+        interpreter = intrprt.Interpreter(tree) #args.stack
+        interpreter.interpret()
+    except (intrprt.LexerError, intrprt.ParserError) as e:
         print(e.message)
         exit(1)
 
-    # semantic_analyzer = SemanticAnalyzer(args.scope)
-    # try:
-    #     semantic_analyzer.visit(tree)
-    # except SemanticError as e:
-    #     print(e.message)
-    #     exit(1)
 
-    # interpreter = Interpreter(tree,args.stack)
-    # interpreter.interpret()
 
 
 if __name__ == "__main__":

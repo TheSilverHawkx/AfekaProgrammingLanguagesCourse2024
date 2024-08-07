@@ -6,6 +6,6 @@ Defun {'name': 'factorial', 'arguments': (n,)}
 # Function application
 factorial(5)
 # Boolean operations
-(x > 0) && (y < 10)
+# (x > 0) && (y < 10)
 # Arithmetic operations
 (3 + 4) * (2 - 1)
