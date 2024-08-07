@@ -72,7 +72,7 @@ class ScopedSymbolTable(object):
         self.enclosing_scope = enclosing_scope
 
     def _init_builtins(self):
-        """ Initialize build in types """
+        """ Initialize built-in data types """
         self.insert(BuiltinTypeSymbol('INTEGER'))
         self.insert(BuiltinTypeSymbol('BOOLEAN'))
 
