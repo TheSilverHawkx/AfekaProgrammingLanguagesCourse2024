@@ -13,8 +13,7 @@ class NodeVisitor(object):
     
 
 class Interpreter(NodeVisitor):
-    def __init__(self, tree: AST) -> None:
-        self.tree = tree
+    def __init__(self) -> None:
         self.call_stack = CallStack()
 
     def visit_Program(self,node: Program):
@@ -125,8 +124,8 @@ class Interpreter(NodeVisitor):
 
         return output
 
-    def interpret(self):
-        if (tree:= self.tree) is not None:
+    def interpret(self,tree: AST):
+        if tree is not None:
             return self.visit(tree)
         
         return ''

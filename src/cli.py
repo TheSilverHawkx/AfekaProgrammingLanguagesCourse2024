@@ -3,37 +3,44 @@ from pathlib import Path
 from os.path import exists,isfile
 import interpreter as intrprt
 
-def configure_parameters() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description='Functional Language Parser'
-    )
-    subparser = parser.add_subparsers()
+def prompt():
+    interpreter = intrprt.Interpreter()
+    semantic_analyzer = intrprt.SemanticAnalyzer()
+    root = intrprt.Program([])
 
-    parse_code_parser = subparser.add_parser("parse")
-    interactive_parser = subparser.add_parser("prompt")
+    while True:
+        try:
+            user_input = ''
+            while True:
+                line = input('>>> ' if not user_input else '... ')
+
+                if line.strip().lower()  == 'exit':
+                    raise KeyboardInterrupt
+                
+                if 'defun ' in line.lower() or line.strip().endswith(('{','(')):
+                    user_input += line + '\n'
+                    continue
+
+                elif  not line.strip().endswith(('{','(')):
+                    user_input += line
+                    break
 
 
-    parse_code_parser.add_argument(
-        '-f',
-        '--input-file',
-        help='Source file path',
-        type=Path
-    )
-    parse_code_parser.add_argument(
-        '--scope',
-        help='Print scope information',
-        action='store_true',
-    )
-    parse_code_parser.add_argument(
-        '--stack',
-        help='Print call stack',
-        action='store_true',
-    )
-    args = parser.parse_args()
+            lexer = intrprt.Lexer(user_input)
+            parser = intrprt.Parser(lexer)
+            ast = parser.parse()
 
-    return args
+            # root.statements.extend(ast.statements)
+            root.statements = ast.statements
+            semantic_analyzer.visit(root)
+            interpreter.interpret(root)
 
-def main(args: argparse.Namespace):
+        except KeyboardInterrupt:
+            pass
+        except Exception as e:
+            print(f"Error: {e}")
+
+def parse():
     if not exists(args.input_file) or not isfile(args.input_file):
         print(f"Path '{args.input_file}' doesn't exist or is not a file")
         exit(-1)
@@ -52,16 +59,47 @@ def main(args: argparse.Namespace):
             print(e.message)
             exit(1)
 
-        print(tree)
         interpreter = intrprt.Interpreter(tree) #args.stack
         interpreter.interpret()
     except (intrprt.LexerError, intrprt.ParserError) as e:
         print(e.message)
         exit(1)
 
+def configure_parameters() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description='Functional Language Parser'
+    )
 
+    parser.add_argument(
+        '--scope',
+        help='Print scope information',
+        action='store_true',
+    )
+    parser.add_argument(
+        '--stack',
+        help='Print call stack',
+        action='store_true',
+    )
 
+    subparsers = parser.add_subparsers(required=True, dest="mode")
+
+    parser_parse = subparsers.add_parser('parse', description="parse a source file and print the output to screen")
+    parser_parse.add_argument(
+        '-f',
+        '--input-file',
+        help='Source file path',
+        type=Path,
+        required=True
+    )
+    parser_parse.set_defaults(func=parse)
+
+    parser_prompt = subparsers.add_parser('prompt')    
+    parser_prompt.set_defaults(func=prompt)
+    
+    
+    args = parser.parse_args()
+    return args
 
 if __name__ == "__main__":
     args = configure_parameters()
-    main(args)
+    args.func()

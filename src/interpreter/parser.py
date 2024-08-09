@@ -1,7 +1,7 @@
 from .lexer import Lexer
 from .token import COMPARE_OPERATORS, FUNCTION_CONFIGURATION_KEYS, LOGICAL_OPERATORS, FunctionConfigurationKey, Token,TokenType, ADDITION_OPERATORS,MULT_OPERATORS
 from .errors import ParserError,ErrorCode
-from .ast import AST,BinOp,Boolean,FunctionCall,FunctionDecl,Integer,Lambda,NoOp,Param,Program,Token,TokenType, NotOp, UnaryOp
+from .ast import AST,BinOp,Boolean,FunctionCall,FunctionDecl,Integer,Lambda,NoOp,Param,Program, NotOp, UnaryOp
 
 class Parser:
     def __init__(self, lexer: Lexer) -> None:

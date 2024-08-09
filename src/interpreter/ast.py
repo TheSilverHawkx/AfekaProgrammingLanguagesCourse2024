@@ -1,10 +1,9 @@
 from .token import Token
 from uuid import uuid4
 from .symbol import FunctionSymbol
-from abc import ABC
-import ast
+from abc import ABCMeta
 
-class AST(metaclass=ABC):
+class AST(metaclass=ABCMeta):
     """
     The base class for all nodes in the Abstract Syntax Tree (AST).
     """
