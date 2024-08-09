@@ -6,7 +6,7 @@ This section provides examples of code written in the custom language, along wit
 ## Example 1: Lambda Expression
 
 ```
->>>(Lambd x . (x + 2))
+>>> (Lambd x . (x + 2))
 ```
 
 This defines a lambda function that takes one argument `x` and returns the result of `x + 2`.
@@ -14,9 +14,9 @@ This defines a lambda function that takes one argument `x` and returns the resul
 ## Example 2: Function Definition
 
 ```
->>>Defun {'name': 'add', 'arguments': (x, y)}
-...(x + y)
->>>add(5,7)
+>>> Defun {'name': 'add', 'arguments': (x, y)}
+... (x + y)
+>>> add(5,7)
 12
 ```
 
@@ -25,9 +25,9 @@ This defines a function `add` that takes two arguments `x` and `y` and returns t
 ## Example 3: Arithmetics
 
 ```
->>>1*2*3
+>>> 1*2*3
 6
->>>2/3
+>>> 2/3
 0
 ```
 
