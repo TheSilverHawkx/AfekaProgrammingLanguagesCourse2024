@@ -12,7 +12,7 @@ Tokens are classified into different types, defined in the `token.py` module. Th
 In the example below, we can see the tokens sequence generated from the input `( 1 + 2) * 5`:
 ```
                                               +-----------------+
-                                              | "( 1 + 2 ) * 5" |
+                                              |  ( 1 + 2 ) * 5  |
                                               +-----------------+
 +--------+    +---------------+    +------+    +---------------+    +--------+    +-------+    +---------------+
 | LPAREN | -> | CONST_INTEGER | -> | PLUS | -> | CONST_INTEGER | -> | RPAREN | -> | MULT  | -> | CONST_INTEGER |
