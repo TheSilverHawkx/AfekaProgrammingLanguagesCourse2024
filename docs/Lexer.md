@@ -5,7 +5,7 @@ The lexer is responsible for converting the input text into a series of tokens. 
 
 ## Token Types
 
-Tokens are classified into different types, defined in the `token.py` module. These include types like `IDENTIFIER`, `NUMBER`, `OPERATOR`, and so on.
+Tokens are classified into different types, defined in the [token.py](../src/interpreter/token.py) module. These include types like `IDENTIFIER`, `NUMBER`, `OPERATOR`, and so on.
 
 ## Example
 
