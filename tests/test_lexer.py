@@ -30,7 +30,7 @@ def test_tokenize_operators_and_symbols():
         TokenType.LPAREN, TokenType.RPAREN, TokenType.LCURL, TokenType.RCURL, 
         TokenType.PLUS, TokenType.MINUS, TokenType.MUL, TokenType.DIV, 
         TokenType.EQUAL, TokenType.NOT_EQUAL, TokenType.GREATER_THAN, TokenType.LESS_THAN, 
-        TokenType.GREATER_THAN_EQ, TokenType.GREATER_THAN_EQ, TokenType.AND, TokenType.OR,
+        TokenType.GREATER_THAN_EQ, TokenType.LESS_THAN_EQ, TokenType.AND, TokenType.OR,
         TokenType.COMMA, TokenType.COLON, TokenType.NOT,TokenType.AND, TokenType.OR
     ]
     
@@ -47,17 +47,23 @@ def test_tokenize_function_declaration():
     
     assert tokens[0].type == TokenType.FUNCTION_DECL
     assert tokens[1].type == TokenType.LCURL
-    assert tokens[2].type == TokenType.ID and tokens[2].value == 'name'
-    assert tokens[3].type == TokenType.COLON
-    assert tokens[4].type == TokenType.ID and tokens[4].value == 'factorial'
-    assert tokens[5].type == TokenType.COMMA
-    assert tokens[6].type == TokenType.ID and tokens[6].value == 'arguments'
-    assert tokens[7].type == TokenType.COLON
-    assert tokens[8].type == TokenType.LPAREN
-    assert tokens[9].type == TokenType.ID and tokens[9].value == 'n'
-    assert tokens[10].type == TokenType.COMMA
-    assert tokens[11].type == TokenType.RPAREN
-    assert tokens[12].type == TokenType.RCURL
+    assert tokens[2].type == TokenType.QUOTE
+    assert tokens[3].type == TokenType.ID and tokens[3].value == 'name'
+    assert tokens[4].type == TokenType.QUOTE
+    assert tokens[5].type == TokenType.COLON
+    assert tokens[6].type == TokenType.QUOTE
+    assert tokens[7].type == TokenType.ID and tokens[7].value == 'factorial'
+    assert tokens[8].type == TokenType.QUOTE
+    assert tokens[9].type == TokenType.COMMA
+    assert tokens[10].type == TokenType.QUOTE
+    assert tokens[11].type == TokenType.ID and tokens[11].value == 'arguments'
+    assert tokens[12].type == TokenType.QUOTE
+    assert tokens[13].type == TokenType.COLON
+    assert tokens[14].type == TokenType.LPAREN
+    assert tokens[15].type == TokenType.ID and tokens[15].value == 'n'
+    assert tokens[16].type == TokenType.COMMA
+    assert tokens[17].type == TokenType.RPAREN
+    assert tokens[18].type == TokenType.RCURL
 
 def test_unexpected_character():
     text = "Defun @"

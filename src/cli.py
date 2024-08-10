@@ -21,6 +21,10 @@ def prompt():
                     user_input += line + '\n'
                     continue
 
+                if line.strip() == '':
+                    user_input = ''
+                    continue
+
                 elif  not line.strip().endswith(('{','(')):
                     user_input += line
                     break

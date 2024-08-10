@@ -209,7 +209,9 @@ class Parser:
         """
 
         if self.current_token.type in (TokenType.PLUS, TokenType.MINUS):
-            return UnaryOp(self.current_token,self.factor())
+            token = self.current_token
+            self.eat(token.type)
+            return UnaryOp(token,self.factor())
         
         left = self.factor()
 
