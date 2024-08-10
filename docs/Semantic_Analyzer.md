@@ -45,6 +45,11 @@ It will then go to the `FUNC_CALL` node and check said symbols table for a funct
 
 Since `FUNC_DECL` happened before `FUNC_CALL` - the symbols table already has a reference for the `foo` function and thus not throw a semantic error.
 
-Had we switched the order of statments in our code to: function call first - the `FUNC_CALL` node would've been on the left of the `Program`.
+Had we switched the order of statments in our code to: function call first like this:
+```
+foo(1,2)
 
-By the time the semantic analyzer reached the `FUNC_CALL` node, the `foo` function was not yet added to the symbols table - meaning it was not defined yet, and thus throw a semantic error.
+Defun {'name' : 'foo', 'arguments': (x,y)}
+  x + y
+```
+The `FUNC_CALL` node would've been on the left of the `Program` node, and so, by the time the semantic analyzer reached the `FUNC_CALL` node - the `foo` function was not yet added to the symbols table - meaning it was not defined yet, and thus throw a semantic error.
