@@ -36,7 +36,7 @@ When the sematic analyzer reaches the `FUNC_DECL` node it creates a new entry in
                                 |  Program  |                            |            Symbol Table         |
                                 +-----------+                            +---------------------------------+
                                /             \                           |  name | scope level |    type   |
-                              /               \                          |  foo  |      1      |  function |
+                              /               \                    *new* |  foo  |      1      |  function | *new*
                              v                 v                         +-------+-------------+-----------+
 Semntic    +----------------+                  +-----------------+
 Analyzer   |   FUNC_DECL    |                  |   FUNC_CALL     |
