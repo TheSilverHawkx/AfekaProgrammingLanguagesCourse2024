@@ -154,7 +154,7 @@ class FunctionCall(AST):
     Usage:
         func_call_node = FunctionCall(token=call_token, actual_params=[arg1, arg2])
     """
-    def __init__(self, token: Token, actual_params: list[Param] ) -> None:
+    def __init__(self, token: Token, actual_params: list[AST] ) -> None:
         self.token = token
         self.func_name: str = token.value
         self.actual_params = actual_params

@@ -79,8 +79,13 @@ class Parser:
             TokenType.MINUS
             ):
             return self.logical_expr()
+        elif self.current_token.value == '':
+            return self.empty()        
         else:
-            return self.empty()
+            self.error(
+                error_code=ErrorCode.UNEXPECTED_TOKEN,
+                token=self.current_token
+            )
 
     def function_declaration(self) -> FunctionDecl:
         """
@@ -96,6 +101,7 @@ class Parser:
         self.eat(TokenType.LCURL)
 
         function_config = { x.value: None for x in FunctionConfigurationKey}
+        is_first_field = False
 
         while self.current_token is not None and self.current_token.type is not TokenType.RCURL:
             self.eat(TokenType.QUOTE)
@@ -130,7 +136,7 @@ class Parser:
                 function_config[FunctionConfigurationKey.ARGUMENTS.value] = self.formal_parameters_list()
                 self.eat(TokenType.RPAREN)
                 
-            if self.current_token.type == TokenType.COMMA:
+            if self.lexer.peek_next_token().type != TokenType.RCURL:
                 self.eat(TokenType.COMMA)
         
 
@@ -195,7 +201,7 @@ class Parser:
             self.eat(op_token.type)
         else:
             return left
-        
+            
         return BinOp(left=left,op=op_token,right=self.additive_expr())
         
     def additive_expr(self) -> AST:
