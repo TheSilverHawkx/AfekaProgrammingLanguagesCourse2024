@@ -4,6 +4,12 @@ from src.interpreter.lexer import Lexer
 from src.interpreter.token import TokenType, Token
 from src.interpreter.errors import LexerError
 
+def test_last_token_is_EOF():
+    text = ''
+    lexer = Lexer(text)
+
+    assert lexer.get_next_token().type == TokenType.EOF
+
 def test_tokenize_keywords_and_identifiers():
     text = "Defun Lambd x y n"
     lexer = Lexer(text)
@@ -37,6 +43,24 @@ def test_tokenize_operators_and_symbols():
     for token, expected_type in zip(tokens, expected_token_types):
         assert token.type == expected_type
 
+def test_token_type_identification_case_insensitivity():
+    tokens = [
+        ('lambd', TokenType.LAMBDA),
+        ('LAMBD', TokenType.LAMBDA),
+        ('lAmbd', TokenType.LAMBDA),
+        ('defun', TokenType.FUNCTION_DECL),
+        ('DEFUN', TokenType.FUNCTION_DECL),
+        ('deFun', TokenType.FUNCTION_DECL),
+        ('x', TokenType.ID),
+        ('X', TokenType.ID)
+    ]
+    for text, expected_token_type in tokens:
+        lexer = Lexer(text)
+
+        token = lexer.get_next_token() 
+        assert token.type == expected_token_type
+        assert token.value == text
+
 def test_tokenize_function_declaration():
     text = "Defun {'name': 'factorial', 'arguments': (n,)}"
     lexer = Lexer(text)
@@ -66,14 +90,13 @@ def test_tokenize_function_declaration():
     assert tokens[18].type == TokenType.RCURL
 
 def test_unexpected_character():
-    text = "Defun @"
+    text = "@"
     lexer = Lexer(text)
     
     token = None
     with pytest.raises(LexerError):
-        while token is not TokenType.EOF:
-            token = lexer.get_next_token()
-
+        lexer.get_next_token()
+            
 def test_unexpected_float():
     text = "1.20"
 
@@ -91,5 +114,38 @@ def test_unexpected_float():
     for token, expected_type in zip(tokens, expected_token_types):
         assert token.type == expected_type
 
+def test_contant_values():
+    tokens = [
+        ('0', TokenType.INTEGER_CONST,0),
+        ('1', TokenType.INTEGER_CONST,1),
+        ('2', TokenType.INTEGER_CONST,2),
+        ('3', TokenType.INTEGER_CONST,3),
+        ('4', TokenType.INTEGER_CONST,4),
+        ('5', TokenType.INTEGER_CONST,5),
+        ('6', TokenType.INTEGER_CONST,6),
+        ('7', TokenType.INTEGER_CONST,7),
+        ('8', TokenType.INTEGER_CONST,8),
+        ('9', TokenType.INTEGER_CONST,9),
+        ('10', TokenType.INTEGER_CONST,10),
+        ('100', TokenType.INTEGER_CONST,100),
+        ('1.5', TokenType.INTEGER_CONST,1),
+        ('True', TokenType.BOOLEAN_CONST,True),
+        ('true', TokenType.BOOLEAN_CONST,True),
+        ('TRUE', TokenType.BOOLEAN_CONST,True),
+        ('False', TokenType.BOOLEAN_CONST,False),
+        ('FALSE', TokenType.BOOLEAN_CONST,False),
+        ('false', TokenType.BOOLEAN_CONST,False),
+    ]
 
+    for text, expected_token_type,expected_value in tokens:
+        lexer = Lexer(text)
+
+        token = lexer.get_next_token() 
+        assert token.type == expected_token_type
+        assert token.value == expected_value
     
+def test_ignore_comments():
+    text = "# this is a comment x + y"
+    lexer = Lexer(text)
+
+    assert lexer.get_next_token().type == TokenType.EOF

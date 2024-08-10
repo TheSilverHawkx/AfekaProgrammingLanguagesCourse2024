@@ -9,7 +9,7 @@ class Lexer:
     def __init__(self, text: str) -> None:
         self.text = text
         self.pos = 0
-        self.current_char = self.text[self.pos]
+        self.current_char = self.text[self.pos] if len(self.text) > 0 else None
         self.lineno = 1
         self.column = 1
     
@@ -78,7 +78,7 @@ class Lexer:
         """
         Advance the `pos` pointer until the end of the comment line (i.e. new line).
         """
-        while self.current_char != '\n':
+        while self.current_char is not None and self.current_char != '\n':
             self.advance()
         self.advance()
     
@@ -199,14 +199,3 @@ class Lexer:
         
         # End-of-file (EOF) was reached
         return Token(type=TokenType.EOF, value=None)
-
-
-
-
-        
-        
-
-
-        
-
-

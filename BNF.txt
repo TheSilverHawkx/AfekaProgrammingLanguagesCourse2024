@@ -4,13 +4,13 @@
 <statement> ::= <empty>
               | <lambda_decleration>
               | <function_declaration>
-              | <expression> 
+              | <logical_expr> 
               | "(" <statement> ")"
 
-<lambda_decleration> ::= "(" "Lambd" <identifier> "." <expression> ")"
+<lambda_decleration> ::= "(" "Lambd" <identifier> "." <logical_expr> ")"
 
-<function_declaration> ::= "Defun" "{" <function_conf_name> "," <function_conf_args> "}" <expression>
-                         | "Defun" "{" <function_conf_args> "," <function_conf_name> "}" <expression>
+<function_declaration> ::= "Defun" "{" <function_conf_name> "," <function_conf_args> "}" <logical_expr>
+                         | "Defun" "{" <function_conf_args> "," <function_conf_name> "}" <logical_expr>
 
 <function_conf_name> ::= "'" "name" "'" ":" "'" ID "'"
 <function_conf_args> ::= "'" "arguments" "'" ":" "(" <formal_parameter_list> ")"

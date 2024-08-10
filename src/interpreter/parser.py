@@ -90,8 +90,12 @@ class Parser:
         <function_conf_name> ::= "'" "name" "'" ":" "'" ID "'"
         <function_conf_args> ::= "'" "arguments" "'" ":" "(" <formal_parameter_list> ")"
         """
+        function_token = self.current_token
+
         self.eat(TokenType.FUNCTION_DECL)
         self.eat(TokenType.LCURL)
+
+        function_config = { x.value: None for x in FunctionConfigurationKey}
 
         while self.current_token is not None and self.current_token.type is not TokenType.RCURL:
             self.eat(TokenType.QUOTE)
@@ -116,26 +120,34 @@ class Parser:
                         token=self.current_token
                     )
                 
-                function_name = self.current_token.value
+                function_config[FunctionConfigurationKey.NAME.value] = self.current_token.value
 
                 self.eat(TokenType.ID)
                 self.eat(TokenType.QUOTE)
             
             else:
                 self.eat(TokenType.LPAREN)
-                arguments = self.formal_parameters_list()
+                function_config[FunctionConfigurationKey.ARGUMENTS.value] = self.formal_parameters_list()
                 self.eat(TokenType.RPAREN)
                 
             if self.current_token.type == TokenType.COMMA:
                 self.eat(TokenType.COMMA)
         
+
         self.eat(TokenType.RCURL)
         # Match function body <expression>
         expr_node = self.logical_expr()
 
+        for key in FunctionConfigurationKey:
+            if function_config[key.value] is None:
+                self.error(
+                    error_code=ErrorCode.ID_NOT_FOUND,
+                    token = function_token
+                )
+
         return FunctionDecl(
-            name=function_name,
-            params=arguments,
+            name=function_config[FunctionConfigurationKey.NAME.value],
+            params=function_config[FunctionConfigurationKey.ARGUMENTS.value],
             expr_node= expr_node
         )
 

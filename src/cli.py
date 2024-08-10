@@ -17,7 +17,7 @@ def prompt():
                 if line.strip().lower()  == 'exit':
                     raise KeyboardInterrupt
                 
-                if 'defun ' in line.lower() or line.strip().endswith(('{','(')):
+                if line.lower().startswith('defun') or line.strip().endswith(('{','(')):
                     user_input += line + '\n'
                     continue
 
@@ -49,6 +49,10 @@ def parse():
         print(f"Path '{args.input_file}' doesn't exist or is not a file")
         exit(-1)
 
+    if args.input_file.suffix != '.lambda':
+        print(f"Error: File '{args.input_file}' is not a lambda file. Aborting...")
+        exit(-1)
+
     content = open(args.input_file,'r').read()
 
     lexer = intrprt.Lexer(content)
@@ -63,8 +67,8 @@ def parse():
             print(e.message)
             exit(1)
 
-        interpreter = intrprt.Interpreter(tree) #args.stack
-        interpreter.interpret()
+        interpreter = intrprt.Interpreter() #args.stack
+        interpreter.interpret(tree)
     except (intrprt.LexerError, intrprt.ParserError) as e:
         print(e.message)
         exit(1)
