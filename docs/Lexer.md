@@ -15,6 +15,7 @@ In the example below, we can see the tokens sequence generated from the input `(
                                               |  ( 1 + 2 ) * 5  |
                                               +-----------------+
 +--------+    +---------------+    +------+    +---------------+    +--------+    +-------+    +---------------+
-| LPAREN | -> | CONST_INTEGER | -> | PLUS | -> | CONST_INTEGER | -> | RPAREN | -> | MULT  | -> | CONST_INTEGER |
+| LPAREN | -> | CONST_INTEGER | -> | PLUS | -> | CONST_INTEGER | -> | RPAREN | -> |  MULT | -> | CONST_INTEGER |
+|    (   |    |       1       |    |   +  |    |       2       |    |    )   |    |   *   |    |       5       |
 +--------+    +---------------+    +------+    +---------------+    +--------+    +-------+    +---------------+
 ```
