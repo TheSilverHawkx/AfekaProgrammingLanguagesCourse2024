@@ -1,11 +1,32 @@
 from enum import Enum
 
 class ARType(Enum):
+    """
+    Enumeration for Activation Record types.
+
+    This Enum defines the types of activation records that can be created,
+    corresponding to different constructs within a program.
+    """
     PROGRAM     = 'PROGRAM'
     FUNCTION    = 'FUNCTION'
     LAMBDA      = 'LAMBDA'
 
 class ActivationRecord:
+    """Represents an activation record in a call stack.
+
+    An activation record stores the context for a function or block, including
+    its name, type, nesting level, and members (variables and their values).
+
+    Attributes:
+        name (str): The name of the activation record.
+        type (ARType): The type of the activation record (PROGRAM, FUNCTION, LAMBDA).
+        nesting_level (int): The nesting level of the activation record.
+        members (dict): A dictionary holding the variables and their values.
+
+    Usage:
+        ar = ActivationRecord(name='main', type=ARType.PROGRAM, nesting_level=1)
+        ar['var1'] = 10
+    """
     def __init__(self, name: str, type: ARType, nesting_level: int) -> None:
         self.name = name
         self.type = type
@@ -36,6 +57,21 @@ class ActivationRecord:
         return self.__str__()
     
 class CallStack:
+    """Represents a call stack for managing activation records.
+
+    The call stack stores a stack of activation records, allowing functions
+    and blocks to manage their scopes and contexts during execution.
+
+    Attributes:
+        _records (list[ActivationRecord]): A list storing the activation records in the stack.
+
+    Usage:
+        ar = ActivationRecord(name='main', type=ARType.PROGRAM, nesting_level=1)
+        stack = CallStack()
+        stack.push(ar)
+        current_ar = stack.peek()
+        stack.pop()
+    """
     def __init__(self) -> None:
         self._records: list[ActivationRecord] = []
 
