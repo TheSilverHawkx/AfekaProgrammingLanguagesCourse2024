@@ -1,6 +1,11 @@
 from enum import Enum
 
 class TokenType(Enum):
+    """Enumeration of all token types used by the lexer and parser.
+
+    This Enum defines the various types of tokens that can be identified 
+    during the lexical analysis phase.
+    """
     # Boolean Operations:
     NOT             = '!'
     AND             = '&&'
@@ -37,10 +42,28 @@ class TokenType(Enum):
     EOF             = 'EOF'
 
 class FunctionConfigurationKey(Enum):
+    """Enumeration for function configuration keys.
+
+    This Enum defines the keys used in function configurations.
+    """
     NAME        = 'name'
     ARGUMENTS   = 'arguments'
 
 def _build_keywords_dictionary(enum: Enum, first_keyword: TokenType, last_keyword: TokenType):
+    """Builds a dictionary of reserved keywords from an Enum range.
+
+    This function constructs a dictionary of reserved keywords by 
+    extracting a slice of Enum members between the specified start 
+    and end members.
+
+    Args:
+        enum (Enum): The Enum class containing the keywords.
+        first_keyword (TokenType): The first keyword in the range.
+        last_keyword (TokenType): The last keyword in the range (inclusive).
+
+    Returns:
+        dict: A dictionary mapping keyword strings to their corresponding Enum members.
+    """
     all_token_types = list(enum)
 
     start_index = all_token_types.index(first_keyword)
@@ -68,6 +91,21 @@ BINARY_OPERATIONS   = [*LOGICAL_OPERATORS,*COMPARE_OPERATORS,*ADDITION_OPERATORS
 FUNCTION_CONFIGURATION_KEYS = _build_keywords_dictionary(FunctionConfigurationKey,FunctionConfigurationKey.NAME,FunctionConfigurationKey.ARGUMENTS)
 
 class Token:
+    """Represents a token produced by the lexer.
+
+    A token is a tuple of a token type, a value, and optionally the line 
+    and column where the token appears in the source code.
+
+    Attributes:
+        type (TokenType): The type of the token (e.g., ID, INTEGER_CONST).
+        value (Any): The value of the token (e.g., 'x', 42).
+        lineno (int, optional): The line number where the token appears.
+        column (int, optional): The column number where the token appears.
+
+    Usage:
+        token = Token(TokenType.ID, 'x', lineno=1, column=5)
+        print(token)
+    """
     def __init__(
         self,
         type: TokenType,
