@@ -76,12 +76,32 @@ class CallStack:
         self._records: list[ActivationRecord] = []
 
     def push(self, item: ActivationRecord) -> None:
+        """Pushes an activation record onto the call stack.
+
+        Args:
+            item (ActivationRecord): The activation record to push onto the stack.
+
+        Usage:
+            ar = ActivationRecord(name='main', type=ARType.PROGRAM, nesting_level=1)
+            stack = CallStack()
+            stack.push(ar)
+        """
         self._records.append(item)
 
     def pop(self) -> ActivationRecord:
+        """Pops the top activation record from the call stack.
+
+        Returns:
+            ActivationRecord: The activation record that was removed from the stack.
+        """
         return self._records.pop()
     
     def peek(self) -> ActivationRecord:
+        """Returns the top activation record from the call stack without removing it.
+
+        Returns:
+            ActivationRecord: The activation record at the top of the stack.
+        """
         return self._records[-1]
     
     def __str__(self):
