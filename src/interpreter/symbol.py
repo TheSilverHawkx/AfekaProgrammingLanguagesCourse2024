@@ -1,11 +1,34 @@
 from typing import Self
 
 class Symbol(object):
+    """Represents a general symbol in the symbol table.
+
+    Symbols can represent variables, types, functions, etc. within
+    the scope of a program. In the current project - it represents functions.
+
+    Attributes:
+        name (str): The name of the symbol.
+        type (optional): The type of the symbol, if applicable.
+
+    Usage:
+        symbol = Symbol(name='x', type='INTEGER')
+    """
     def __init__(self, name, type=None) -> None:
         self.name = name
         self.type = type
 
 class BuiltinTypeSymbol(Symbol):
+    """Represents a built-in type symbol in the symbol table.
+
+    Built-in types are predefined types such as INTEGER and BOOLEAN.
+
+    Attributes:
+        name (str): The name of the built-in type.
+
+    Usage::
+
+        int_type = BuiltinTypeSymbol(name='INTEGER')
+    """
     def __init__(self, name, type=None) -> None:
         super().__init__(name)
 
@@ -15,6 +38,17 @@ class BuiltinTypeSymbol(Symbol):
     __repr__ = __str__
 
 class ParamSymbol(Symbol):
+    """Represents a parameter symbol in the symbol table.
+
+    Parameters are used within function or method declarations.
+
+    Attributes:
+        name (str): The name of the parameter.
+        type (optional): The type of the parameter, if applicable.
+
+    Usage:
+        param = ParamSymbol(name='x', type='INTEGER')
+    """
     def __init__(self, name, type=None):
         super().__init__(name, type)
 
@@ -28,6 +62,21 @@ class ParamSymbol(Symbol):
     __repr__ = __str__
 
 class FunctionSymbol(Symbol):
+    """Represents a function symbol in the symbol table.
+
+    Function symbols include information about the function, such as:
+    name, its formal parameters, and the associated AST for the function body.
+
+    Attributes:
+        name (str): The name of the function.
+        formal_params (list[ParamSymbol]): The list of parameters for the function.
+        expr_ast (AST): The AST node representing the function's body.
+
+    Usage:
+        param1 = Param(token=param_token1)
+        param2 = Param(token=param_token2)
+        func_symbol = FunctionSymbol(name='foo', formal_params=[param1, param2])
+    """
     def __init__(self, name, formal_params: list[ParamSymbol]=[]) -> None:
         super(FunctionSymbol,self).__init__(name)
 
@@ -44,6 +93,20 @@ class FunctionSymbol(Symbol):
     __repr__ = __str__
 
 class LambdaSymbol(Symbol):
+    """Represents a lambda symbol in the symbol table.
+
+    Lambda symbols include information about the lambda's name, 
+    its parameter, and the associated AST node for the lambda expression.
+
+    Attributes:
+        name (str): The name of the lambda.
+        param (ParamSymbol): The parameter of the lambda.
+        expr_ast (AST): The AST representing the lambda's body.
+
+    Usage:
+        lambda_symbol = LambdaSymbol(name='lambda_1', param=param)
+    """
+    
     def __init__(self, name: str, param: ParamSymbol = None) -> None:
         super(LambdaSymbol,self).__init__(name)
 
@@ -60,6 +123,20 @@ class LambdaSymbol(Symbol):
     __repr__ = __str__
 
 class ScopedSymbolTable(object):
+    """Represents a scoped symbol table for tracking symbols in various scopes.
+
+    This symbol table supports nested scopes and allows insertion, lookup, 
+    and initialization of built-in types.
+
+    Attributes:
+        scope_name (str): The name of the scope.
+        scope_level (int): The level of the scope (e.g., global scope might be level 1).
+        enclosing_scope (Self): The parent scope that encloses this scope. Default is None
+
+    Usage:
+        global_scope = ScopedSymbolTable(scope_name='global', scope_level=1)
+        global_scope._init_builtins()
+    """
     def __init__(
             self,
             scope_name: str,
@@ -100,19 +177,32 @@ class ScopedSymbolTable(object):
     __repr__ = __str__
 
     def insert(self, symbol: Symbol) -> None:
-        """ Insert a symbol into the symbol table."""
+        """
+        Inserts a symbol into the symbol table.
+
+        Args:
+            symbol (Symbol): The symbol to be inserted into the table.
+
+        Usage:
+            int_symbol = BuiltinTypeSymbol('INTEGER'))
+            symbol_table.insert(int_symbol)
+        """
         self._symbols[symbol.name] = symbol
 
     def lookup(self, name: str, current_scope_only: bool = False) -> Symbol | None:
         """
-        Look up a symbol by name in the symbol table recursively.
+        Looks up a symbol by name in the symbol table.
 
-        :param name: name of the symbol to look up.
-        :type name: str
-        :param current_scope_only: limit the lookup to the current symbol table only.
-        :type current_scope_only: bool
-        :return: Symbol from the symbol table or None
-        :rtype: Symbol | None
+        This method searches for the symbol in the current scope and, 
+        if not found, recursively searches in enclosing scopes unless 
+        `current_scope_only` is set to True.
+
+        Args:
+            name (str): The name of the symbol to look up.
+            current_scope_only (bool, optional): If True, limits the lookup to the current scope only.
+
+        Returns:
+            Symbol | None: The symbol if found, otherwise None.
         """
         symbol = self._symbols.get(name, None)
 
