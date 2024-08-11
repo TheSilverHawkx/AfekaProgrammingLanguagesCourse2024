@@ -1,0 +1,10 @@
+# Function definition for power
+Defun {'name': 'power', 'arguments': (base, exp)}
+ (exp == 0) or (base * power(base, exp - 1))
+
+# Function definition for square
+Defun {'name': 'square', 'arguments': (x)}
+ power(x, 2)
+
+# Function application
+square(4)
