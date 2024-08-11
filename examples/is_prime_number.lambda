@@ -1,0 +1,15 @@
+# Function to check if a number is divisible by another number
+Defun {'name': 'isDivisible', 'arguments': (a, b)}
+ (a % b) == 0
+
+# Recursive function to check divisibility by any number less than n
+Defun {'name': 'checkDivisibility', 'arguments': (n, divisor)}
+ (divisor == 1) or 
+ (!(isDivisible(n, divisor)) && checkDivisibility(n, divisor - 1))
+
+# Function to check if a number is prime
+Defun {'name': 'isPrime', 'arguments': (n)}
+ (n > 1) && checkDivisibility(n, n - 1)
+
+# Test case: Check if 7 is a prime number
+isPrime(7)
