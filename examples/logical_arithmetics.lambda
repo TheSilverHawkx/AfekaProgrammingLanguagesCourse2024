@@ -1,0 +1,10 @@
+# Logical and arithmetic expression that should evaluate to True
+((2 + 3) * (4 - 1) > 10) && ((5 / 1) + 2 != 7) || (8 % 3 == 2)
+
+
+# Arithmetic expression that should evaluate to 21
+(5 + 3) * (10 - 2) / 4 + (7 % 3) * (2 + 3)
+
+
+
+
