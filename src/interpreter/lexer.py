@@ -6,6 +6,23 @@ IS_ALPHANUMERIC = lambda char: char.isalnum()
 IS_NUMERIC = lambda char: char.isdigit()
 
 class Lexer:
+    """Lexical analyzer (lexer) for converting input text into tokens.
+
+    The Lexer class reads input text and breaks it down into tokens that 
+    can be used by a parser for further analysis. It handles various token 
+    types such as identifiers, reserved keywords, operators, and literals.
+
+    Attributes:
+        text (str): The input text to be tokenized.
+        pos (int): The current index position in the input text.
+        current_char (str or None): The current character being analyzed.
+        lineno (int): The current line number in the input text.
+        column (int): The current column number in the input text.
+
+    Usage:
+        lexer = Lexer("1 + 1")
+        token = lexer.get_next_token()
+    """
     def __init__(self, text: str) -> None:
         self.text = text
         self.pos = 0
@@ -14,6 +31,11 @@ class Lexer:
         self.column = 1
     
     def _error(self) -> None:
+        """Raises a LexerError with the current character's position.
+
+        This method is called when the lexer encounters an invalid character 
+        or sequence in the input text.
+        """
         raise LexerError(
             "Lexer error on '{lexeme}' line: {lineno} column: {column}".format(
                 lexeme = self.current_char,
@@ -23,8 +45,10 @@ class Lexer:
         )
     
     def advance(self) -> None:
-        """
-        Advance the `pos` pointer and set the `current_char` variable.
+        """Advances the `pos` pointer and updates the `current_char` variable.
+
+        This method moves the lexer to the next character in the input text, 
+        updating the position, line number, and column number accordingly.
         """
 
         if self.current_char == '\n':
@@ -41,20 +65,40 @@ class Lexer:
             self.column += 1
 
     def advance_if_match(self, char:str) -> None:
+        """Advances the lexer if the current character matches the specified character.
+
+        Args:
+            char (str): The character to match against the current character.
+
+        Raises:
+            LexerError: If the current character does not match the specified character.
+        """
         if self.current_char == char:
             self.advance()
         else:
             self._error()
 
     def peek(self) -> str:
-        """
-        Return the character at `self.pos + 1` without consuming it.
+        """Returns the character at `self.pos + 1` without consuming it.
+
+        This method allows the lexer to look ahead one character in the input text.
+
+        Returns:
+            str: The next character in the input text, or None if at the end.
         """
         peek_pos = self.pos + 1
 
         return self.text[peek_pos] if peek_pos <= len(self.text) - 1 else None
     
     def peek_next_token(self) -> Token:
+        """Peeks at the next token without consuming it.
+
+        This method saves the current position, advances to get the next token, 
+        then restores the original position.
+
+        Returns:
+            Token: The next token in the input text.
+        """
         origin_pos = self.pos
         origin_lineo = self.lineno
         origin_column = self.column
@@ -68,23 +112,38 @@ class Lexer:
         return token
     
     def skip_whitespace(self) -> None:
-        """
-        Advance the `pos` pointer until the next non-whitespace character.
+        """Advances the `pos` pointer until the next non-whitespace character.
+
+        This method is used to ignore spaces, tabs, and other whitespace characters
+        in the input text.
         """
         while self.current_char is not None and self.current_char.isspace():
             self.advance()
 
     def skip_comment(self) -> None:
-        """
-        Advance the `pos` pointer until the end of the comment line (i.e. new line).
+        """Advances the `pos` pointer until the end of the comment line (i.e., new line).
+
+        This method is used to skip over one-line comments in the input text, which are 
+        typically ignored by the lexer.
         """
         while self.current_char is not None and self.current_char != '\n':
             self.advance()
         self.advance()
     
     def __get_multichar_by_condition(self, condition) -> str:
-        """
-        Returns a full identifier (multi-digit number, reserved keyword, etc.) from `text` based on a `condition` function.
+        """Returns a multi-character sequence from `text` based on a `condition` function.
+
+        This method is used to extract identifiers, multi-digit numbers, reserved 
+        keywords, etc., from the input text.
+
+        Args:
+            condition (function): A function that defines the condition for extracting characters.
+
+        Returns:
+            str: A sequence of characters that match the specified condition.
+
+        Usage:
+            value = self.__get_multichar_by_condition(lambda char: char.isalpha())
         """
         result = ''
         while self.current_char is not None and condition(self.current_char):
@@ -94,8 +153,13 @@ class Lexer:
         return result
 
     def integer(self) -> Token:
-        """
-        Return a multi-digit poitive integer consumed from `text`.
+        """Returns a multi-digit positive integer token from `text`.
+
+        This method converts a sequence of numeric characters into an 
+        integer token.
+
+        Returns:
+            Token: A token representing the integer literal.
         """
         token = Token(type=TokenType.INTEGER_CONST, value=None, lineno=self.lineno, column=self.column)
 
@@ -106,8 +170,13 @@ class Lexer:
         return token
         
     def id(self) -> Token:
-        """
-        Handle identifiers (e.g. function call) and reserved keywords
+        """Handles identifiers and reserved keywords.
+
+        This method converts sequences of alphanumeric characters into 
+        identifier tokens or reserved keyword tokens.
+
+        Returns:
+            Token: A token representing the identifier or reserved keyword.
         """
         token = Token(type=None, value=None, lineno=self.lineno, column=self.column)
 
@@ -135,12 +204,14 @@ class Lexer:
         return token
         
     def get_next_token(self) -> Token:
-        """
-        Tokenizer (Lexican Analyzer) Method.
+        """Tokenizes the input text, returning one token at a time.
 
-        The method converts the into into tokens, one token at a time.
-        """
+        This method converts the input text into tokens, handling whitespace, 
+        comments, identifiers, integers, operators, and other tokens.
 
+        Returns:
+            Token: The next token in the input text.
+        """
         while self.current_char is not None:
             # Handle whitespace
             if self.current_char.isspace():
