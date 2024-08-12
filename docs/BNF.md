@@ -28,11 +28,10 @@ This document provides a detailed description of the Backus-Naur Form (BNF) gram
 
 
 <logical_expr>  ::= <compare_expr> | <compare_expr> <binary_op> <logical_expr>
-<compare_expr>  ::= <additive_expr> | <additive_expr> <compare_op> <additive_expr>
-<additive_expr> ::= <multiplicative_expr> | <multiplicative_expr> <addition_op> <additive_expr>
-<multiplicative_expr> ::= <factor>
-                        | <factor> <mult_op> <multiplicative_expr>
-                        | <addition_op> <factor>
+<compare_expr>  ::= <addition_expr> | <addition_expr> <compare_op> <addition_expr>
+<addition_expr> ::= <multiplication_expr> | <multiplication_expr> <addition_op> <addition_expr>
+<multiplication_expr> ::= <factor> | <factor> <mult_op> <multiplication_expr>
+
 
 <factor> ::= <integer>
            | <boolean>
@@ -41,6 +40,7 @@ This document provides a detailed description of the Backus-Naur Form (BNF) gram
            | "(" <logical_expr> ")"
            | "!" <logical_expr>
            | "not" <logical_expr>
+           | <addition_op> <factor>
 
 <function_call> ::= <identifier> "(" <function_call_parameters> ")"
 <function_call_parameters> ::= <logical_expr>
@@ -62,20 +62,22 @@ This document provides a detailed description of the Backus-Naur Form (BNF) gram
 <digit>         ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 <empty>         ::=
 ```
-### Symbol Structure
-- **`<program>`**: Represents the entire program.
+Symbol Structure
+--
+### Program
+**`<program>`**: Represents the entire program, and is the root of the whole program.
   ```bnf
   <program> ::= <statement_list>
   ```
 
 ### Statement List
-- **`<statement_list>`**: A sequence of statements.
+**`<statement_list>`**: A sequence of statements.
   ```bnf
   <statement_list> ::= <statement> | <statement> <statement_list>
   ```
 
 ### Statements
-- **`<statement>`**: Represents different types of executable instructions within the program.
+**`<statement>`**: Represents the different types of executable instructions within the program.
   ```bnf
   <statement> ::= <empty>
                 | <lambda_decleration>
@@ -85,13 +87,14 @@ This document provides a detailed description of the Backus-Naur Form (BNF) gram
   ```
 
 ### Lambda Declaration
-- **`<lambda_decleration>`**: Defines an anonymous function (lambda) with one parameter and a body expression.
+**`<lambda_decleration>`**: Defines an anonymous function (lambda) with one parameter and a body expression.
   ```bnf
   <lambda_decleration> ::= "(" "Lambd" <identifier> "." <logical_expr> ")"
   ```
 
 ### Function Declaration
-- **`<function_declaration>`**: Defines a named function with arguments and a body expression.
+**`<function_declaration>`**: Defines a named function with arguments and a body expression.
+The order of the function's configuration is dynamic.
   ```bnf
   <function_declaration> ::= "Defun" "{" <function_conf_name> "," <function_conf_args> "}" <logical_expr>
                            | "Defun" "{" <function_conf_args> "," <function_conf_name> "}" <logical_expr>
@@ -109,39 +112,44 @@ This document provides a detailed description of the Backus-Naur Form (BNF) gram
   ```
 
 ### Formal Parameter List
-- **`<formal_parameter_list>`**: Defines the list of parameters for a function.
+**`<formal_parameter_list>`**: Defines the list of parameters for a function.
+The symbol has multiple productions to account for the optional positioning of a comma (`,`) after the last parameter.
   ```bnf
   <formal_parameter_list> ::= <identifier> | <identifier> ',' | <identifier> ',' <formal_parameter_list>
   ```
 
 ### Logical Expressions
-- **`<logical_expr>`**: Represents logical or comparison expressions.
+**`<logical_expr>`**: Represents a logical binary operation (`AND`,`OR`), or a comparison operation
   ```bnf
   <logical_expr>  ::= <compare_expr> | <compare_expr> <binary_op> <logical_expr>
   ```
 
 ### Comparison Expressions
-- **`<compare_expr>`**: Defines expressions involving comparisons.
+**`<compare_expr>`**: Represents a comparison binary operation (`==`,`>`,`<`, etc.), or an addition arithmetic operation.
+
+Note: 
   ```bnf
-  <compare_expr>  ::= <additive_expr> | <additive_expr> <compare_op> <additive_expr>
+  <compare_expr>  ::= <addition_expr> | <addition_expr> <compare_op> <addition_expr>
   ```
 
 ### Additive Expressions
-- **`<additive_expr>`**: Defines expressions involving addition or subtraction.
+**`<addition_expr>`**: Represents an binary addition arithmetic operation (`+`, `-`), or a multiplication operation.
+Note: The addition symbol encapsulates the multiplication symbol in order to implement PEMDAS rules.
   ```bnf
-  <additive_expr> ::= <multiplicative_expr> | <multiplicative_expr> <addition_op> <additive_expr>
+  <addition_expr> ::= <multiplication_expr> | <multiplication_expr> <addition_op> <addition_expr>
   ```
 
 ### Multiplicative Expressions
-- **`<multiplicative_expr>`**: Defines expressions involving multiplication, division, or modulus.
+**`<multiplication_expr>`**: Represents a binary multiplication operation (`*`,`/`,`%`), a unary operation (`-`,`+`,`!`), or a terminal value.
+Note: The multiplication symbol encapsulates unary operation symbols to implement PEMDAS rules.
   ```bnf
-  <multiplicative_expr> ::= <factor>
-                          | <factor> <mult_op> <multiplicative_expr>
-                          | <addition_op> <factor>
+  <multiplication_expr> ::= <factor> | <factor> <mult_op> <multiplication_expr>
   ```
 
 ### Factors
-- **`<factor>`**: The simplest elements in expressions, including integers, booleans, function calls, and identifiers.
+**`<factor>`**: Represents the basic elements in an expression, including integers, booleans, function calls, and identifiers.
+In addition this symbol also include the unary operations (`-`,`+`,`!`).
+Note: parenthesis encapsulation is also implemented here to implement PEMDAS rules.
   ```bnf
   <factor> ::= <integer>
              | <boolean>
@@ -150,6 +158,7 @@ This document provides a detailed description of the Backus-Naur Form (BNF) gram
              | "(" <logical_expr> ")"
              | "!" <logical_expr>
              | "not" <logical_expr>
+             | <addition_op> <factor>
   ```
 
 ### Function Call
@@ -168,18 +177,20 @@ This document provides a detailed description of the Backus-Naur Form (BNF) gram
 
 ### Terminal Symbols
 
-- **`<integer>`**: A numeric value.
+- **`<integer>`**: A whole number value defined as a digit or a sequence of digits.
   ```bnf
   <integer> ::= <digit> | <digit> <integer>
   ```
 
-- **`<identifier>`**: A name or label, made up of characters and digits.
+- **`<identifier>`**: A name or a reserved keyword, made up of characters and digits.
   ```bnf
   <identifier> ::= <character>
                  | <character> <identifier>
                  | <identifier> <digit>
                  | <identifier> <digit> <identifier>
   ```
+  **limitations:**
+  - 
 
 - **`<boolean>`**: Represents a boolean value.
   ```bnf
@@ -249,10 +260,9 @@ This document provides a detailed description of the Backus-Naur Form (BNF) gram
 
 ### Limitations of the Language
 
-1. **Lack of Control Structures**: The language doesn't include conditionals (e.g., `if-else`) or loops (e.g., `while`, `for`), limiting its capability to handle complex logic.
-2. **No Type System**: The BNF doesn't define a type system, which could lead to runtime errors due to type mismatches.
-3. **Minimal Data Structures**: The grammar only supports basic types like integers and booleans, without arrays, lists, or more complex data structures.
-4. **Scalability**: The language may not scale well for larger programs due to the lack of modular constructs like classes or modules.
-5. **Ambiguity in Operator Precedence**: The BNF does not explicitly define the precedence and associativity of operators, which could lead to ambiguity in complex expressions. 
+1. **Lack of Flow Control**: The language doesn't include conditionals (e.g., `if-else`) or loops (e.g., `while`, `for`).
+2. **No Type System**: The language doesn't include a type system, and relies on Python's dynamic types. This could to runtime errors due to type mismatches.
+3. **No assignment operations**: The language doesn't include assignment operations for variables, and instead returns the output of each operation right after it is interpreted.
+4. **Limited Data Types**: The language only supports integers and booleans constants, without arrays, lists, or decimal numbers.
 
 This BNF provides a basic framework for a simple functional programming language with support for functions, logical expressions, and basic operations. However, it would require significant expansion and refinement for use in more complex or large-scale programming tasks.
