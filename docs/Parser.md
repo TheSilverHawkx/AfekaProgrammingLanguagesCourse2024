@@ -37,4 +37,4 @@ Given the tokens produced from `(1 + 2) * 5`, the parser would create an AST rep
 </pre>
 </div>
 
-Note: By using the AST format, it allows us to manage our parsed code in a tree-like structure that is easy to traverse using the [PreOrder Traversal method](https://www.geeksforgeeks.org/tree-traversals-inorder-preorder-and-postorder/#preorder-traversal), and by doing so - we also implement order of precedence in the code.
+Note: By using the AST format, it allows us to manage our parsed code in a tree-like structure that is easy to traverse using the [PostOrder Traversal method](https://www.geeksforgeeks.org/tree-traversals-inorder-preorder-and-postorder/#postorder-traversal), and by doing so - we also implement order of precedence in the code.
