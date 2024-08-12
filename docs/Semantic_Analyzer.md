@@ -40,7 +40,7 @@ Its AST will look like this:
   </pre>
 </div>
 
-By following the PreOrder Traversal method, the semantic analyzer will first reach the `FUNC_DECL` node and define the `foo` function within its [symbols table](./Symbol_Table.md).
+By following the PostOrder Traversal method, the semantic analyzer will first reach the `FUNC_DECL` node and define the `foo` function within its [symbols table](./Symbol_Table.md).
 It will then go to the `FUNC_CALL` node and check said symbols table for a function named `foo`.
 
 Since `FUNC_DECL` happened before `FUNC_CALL` - the symbols table already has a reference for the `foo` function and thus not throw a semantic error.
