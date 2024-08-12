@@ -327,7 +327,6 @@ def test_lambda_valid_structure():
         lambd = ast.statements[0]
         assert lambd.param.name == param_name
 
-
 def test_lambda_invalid_structure():
     tests = [
         '(Lambd x: (x+y))',

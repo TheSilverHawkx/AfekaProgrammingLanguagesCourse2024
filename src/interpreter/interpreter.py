@@ -70,8 +70,9 @@ class Interpreter(NodeVisitor):
         self.call_stack.push(ar)
 
         for statement in node.statements:
-            if (output := self.visit(statement)) is not None:
-                print(output)
+            output = self.visit(statement)
+            if output is not None:
+                yield output
 
         self.call_stack.pop()
     
@@ -267,6 +268,6 @@ class Interpreter(NodeVisitor):
             The result of interpreting the AST, or an empty string if the tree is None.
         """
         if tree is not None:
-            return self.visit(tree)
+            yield from self.visit(tree)
 
         

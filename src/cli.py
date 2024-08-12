@@ -34,10 +34,11 @@ def prompt():
             parser = intrprt.Parser(lexer)
             ast = parser.parse()
 
-            # root.statements.extend(ast.statements)
             root.statements = ast.statements
             semantic_analyzer.visit(root)
-            interpreter.interpret(root)
+
+            for output in interpreter.interpret(root):
+                print(output)
 
         except KeyboardInterrupt:
             pass
@@ -68,7 +69,8 @@ def parse():
             exit(1)
 
         interpreter = intrprt.Interpreter() #args.stack
-        interpreter.interpret(tree)
+        for output in interpreter.interpret(tree):
+            print(output)
     except (intrprt.LexerError, intrprt.ParserError) as e:
         print(e.message)
         exit(1)

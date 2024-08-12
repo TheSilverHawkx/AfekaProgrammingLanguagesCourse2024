@@ -1,8 +1,8 @@
 from .interpreter import NodeVisitor
-from .symbol import ScopedSymbolTable, ParamSymbol, FunctionSymbol, LambdaSymbol
+from .symbol import BuiltinTypeSymbol, ScopedSymbolTable, ParamSymbol, FunctionSymbol, LambdaSymbol
 from .errors import SemanticError, ErrorCode
 from .token import Token
-from .ast import Program,FunctionCall,FunctionDecl,Lambda,BinOp,NotOp,UnaryOp,NoOp,Param,Integer,Boolean
+from .ast import Program,FunctionCall,FunctionDecl,Lambda,BinOp,NotOp,UnaryOp,NoOp,Param,Integer,Boolean, AST
 
 class SemanticAnalyzer(NodeVisitor):
     """
@@ -14,7 +14,13 @@ class SemanticAnalyzer(NodeVisitor):
     It also manages the scoping of variables and functions.
     """
     def __init__(self) -> None:
-        self.current_scope: ScopedSymbolTable = None
+        self.current_scope: ScopedSymbolTable = ScopedSymbolTable(
+            scope_name='global',
+            scope_level=1,
+            enclosing_scope=None
+        )
+
+        self.current_scope._init_builtins()
 
     def error(self, error_code: ErrorCode, token: Token) -> None:
         """
@@ -40,21 +46,9 @@ class SemanticAnalyzer(NodeVisitor):
         Args:
             node (Program): The program node representing the entire program.
         """
-        global_scope = ScopedSymbolTable(
-            scope_name='global',
-            scope_level=1,
-            enclosing_scope=self.current_scope
-        )
-
-        global_scope._init_builtins()
-
-        self.current_scope = global_scope
-
-        # Visit Subtree
+        
         for node in node.statements:
             self.visit(node)
-        
-        self.current_scope = self.current_scope.enclosing_scope
 
     def visit_NoOp(self,node:NoOp) -> None:
         """
@@ -69,11 +63,12 @@ class SemanticAnalyzer(NodeVisitor):
     def visit_BinOp(self,node: BinOp) -> None:
         """
         Handles a binary operation AST node.
+
         Traversing left and right operands.
 
         Args:
             node (BinOp): The binary operation node to be visited.
-        """
+        """            
         self.visit(node.left)
         self.visit(node.right)
 
@@ -87,6 +82,13 @@ class SemanticAnalyzer(NodeVisitor):
             node (FunctionDecl): The function declaration node to be visited.
         """
         func_name = node.func_name
+
+        if self.current_scope.lookup(func_name) is not None:
+            self.error(
+                error_code=ErrorCode.DUPLICATE_SYMBOL,
+                token=node
+            )
+
         func_symbol = FunctionSymbol(name=func_name)
 
         self.current_scope.insert(func_symbol)
@@ -99,7 +101,7 @@ class SemanticAnalyzer(NodeVisitor):
         self.current_scope = func_scope 
 
         for param in node.params:
-            param_symbol = ParamSymbol(param.name)
+            param_symbol = ParamSymbol(param.name,BuiltinTypeSymbol)
 
             self.current_scope.insert(param_symbol)
             func_symbol.formal_params.append(param_symbol)
@@ -117,11 +119,23 @@ class SemanticAnalyzer(NodeVisitor):
         Args:
             node (FunctionCall): The function call node to be visited.
         """
+        function_symbol: FunctionSymbol | None = self.current_scope.lookup(node.func_name)
 
+        if function_symbol is None:
+            self.error(
+                error_code=ErrorCode.SYMBOL_NOT_FOUND,
+                token=node.token
+            )
+
+        if len(function_symbol.formal_params) != len(node.actual_params):
+            self.error(
+                error_code=ErrorCode.UNEQUAL_PARAM_COUNT,
+                token=node.token
+            )
+
+        node.func_symbol = function_symbol
         for param in node.actual_params:
             self.visit(param)
-
-        node.func_symbol = self.current_scope.lookup(node.func_name)
 
     def visit_Lambda(self, node: Lambda) -> None:
         """
@@ -132,7 +146,8 @@ class SemanticAnalyzer(NodeVisitor):
             node (Lambda): The lambda expression node to be visited.
         """
         lambda_name = node.lambda_name
-        lambda_symbol = LambdaSymbol(name=lambda_name)
+        param_symbol = ParamSymbol(node.param.name)
+        lambda_symbol = LambdaSymbol(name=lambda_name,param=param_symbol)
 
         self.current_scope.insert(lambda_symbol)
         lambda_scope = ScopedSymbolTable(
@@ -143,9 +158,7 @@ class SemanticAnalyzer(NodeVisitor):
 
         self.current_scope = lambda_scope 
 
-        param_symbol = ParamSymbol(node.param.name)
         self.current_scope.insert(param_symbol)
-        lambda_symbol.param = param_symbol
 
         self.visit(node.expr_node)
 
@@ -174,13 +187,21 @@ class SemanticAnalyzer(NodeVisitor):
 
     def visit_Param(self, node: Param) -> None:
         """
-        Handles a formal parameter AST node.
-        No action is performed here.
+        Handles a actual parameter AST node.
+        
+        Verifies the parameter was already declared
 
         Args:
             node (Param): The parameter node to be visited.
         """
-        pass
+        param_symbol = self.current_scope.lookup(node.name)
+
+        if param_symbol is None:
+            self.error(
+                error_code=ErrorCode.SYMBOL_NOT_FOUND,
+                token=node.token
+            )
+
 
     def visit_Integer(self, node: Integer) -> None:
         """

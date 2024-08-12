@@ -136,7 +136,7 @@ class Parser:
                 function_config[FunctionConfigurationKey.ARGUMENTS.value] = self.formal_parameters_list()
                 self.eat(TokenType.RPAREN)
                 
-            if self.lexer.peek_next_token().type != TokenType.RCURL:
+            if self.current_token.type != TokenType.RCURL:
                 self.eat(TokenType.COMMA)
         
 

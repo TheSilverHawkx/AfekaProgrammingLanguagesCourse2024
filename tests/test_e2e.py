@@ -1,31 +1,73 @@
 
 import pytest
-from interpreter.lexer import Lexer
-from interpreter.parser import Parser
-from interpreter.analyzer import SemanticAnalyzer
-from interpreter.interpreter import Interpreter
+from src.interpreter.lexer import Lexer
+from src.interpreter.parser import Parser
+from src.interpreter.analyzer import SemanticAnalyzer
+from src.interpreter.interpreter import Interpreter
+from src.interpreter.ast import AST
 
-def run_code(text):
-    lexer = Lexer(text)
-    parser = Parser(lexer)
-    tree = parser.parse()
-    
-    analyzer = SemanticAnalyzer()
-    analyzer.visit(tree)
-    
+def get_ast(text:str)-> AST:
+    return Parser(Lexer(text)).parse()
+
+def test_simple_addition():
+    text = "5 + 3"
+    ast = get_ast(text)
+
     interpreter = Interpreter()
-    result = interpreter.visit(tree)
-    
-    return result
+    result = next(interpreter.interpret(ast))
+    assert result == 8
 
-def test_factorial_function():
-    text = "Defun {'name': 'factorial', 'arguments': (n,)} (n == 0) or (n * factorial(n - 1)); factorial(5);"
-    result = run_code(text)
-    assert result == 120  # 5! = 120
+def test_combined_operations():
+    text = "3 % 5 + 2 * 8 - 3 / 3"
+
+    ast = get_ast(text)
+
+    interpreter = Interpreter()
+    result = next(interpreter.interpret(ast))
+    assert result == 18
+
+def test_unary_opeartions():
+    tests = [
+        ('-5', -5),
+        ('-5 + 10', 5),
+        ('+5 + 10', 15)
+    ]
+    interpreter = Interpreter()
+
+    for text, expected_output in tests:
+        result = next(interpreter.interpret(get_ast(text)))
+        assert result == expected_output
+
+def test_logical_operations():
+    tests = [
+        ('!True',False),
+        ('True || False',True),
+        ('False || True',True),
+        ('True && False',False),
+        ('True && True',True),
+    ]
+    interpreter = Interpreter()
+
+    for text, expected_output in tests:
+        result = next(interpreter.interpret(get_ast(text)))
+        assert result == expected_output
+
+def test_function_declaration_call():
+    text = """
+    Defun {'name': 'add', 'arguments': (x, y)} x + y
+    add(3, 7)
+    """
+
+    interpreter = Interpreter()
+
+    result = next(interpreter.interpret(get_ast(text)))
+    assert result == 10
 
 def test_lambda_expression():
     text = "(Lambd x.(Lambd y. (x + y)))(3)(4)"
-    result = run_code(text)
+    interpreter = Interpreter()
+
+    result = next(interpreter.interpret(get_ast(text)))
     assert result == 7
 
 def test_conditional_and_arithmetic():
@@ -42,3 +84,4 @@ def test_runtime_error():
     text = "Defun {'name': 'error', 'arguments': (x,)} x / 0; error(10);"
     with pytest.raises(ZeroDivisionError):
         run_code(text)
+

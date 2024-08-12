@@ -49,7 +49,7 @@ class ParamSymbol(Symbol):
     Usage:
         param = ParamSymbol(name='x', type='INTEGER')
     """
-    def __init__(self, name, type=None):
+    def __init__(self, name: str, type=BuiltinTypeSymbol):
         super().__init__(name, type)
 
     def __str__(self):
@@ -109,7 +109,6 @@ class LambdaSymbol(Symbol):
     
     def __init__(self, name: str, param: ParamSymbol = None) -> None:
         super(LambdaSymbol,self).__init__(name)
-
         self.param = param
         self.expr_ast = None
 
