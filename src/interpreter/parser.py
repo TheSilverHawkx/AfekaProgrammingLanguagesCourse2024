@@ -1,7 +1,29 @@
 from .lexer import Lexer
-from .token import COMPARE_OPERATORS, FUNCTION_CONFIGURATION_KEYS, LOGICAL_OPERATORS, FunctionConfigurationKey, Token,TokenType, ADDITION_OPERATORS,MULT_OPERATORS
+from .token import (
+    COMPARE_OPERATORS,
+    FUNCTION_CONFIGURATION_KEYS,
+    LOGICAL_OPERATORS,
+    FunctionConfigurationKey,
+    Token,
+    TokenType,
+    ADDITION_OPERATORS,MULT_OPERATORS
+)
 from .errors import ParserError,ErrorCode
-from .ast import AST,BinOp,Boolean,FunctionCall,FunctionDecl,Integer,Lambda,NoOp,Param,Program, NotOp, UnaryOp
+from .ast import (
+    AST,
+    BinOp,
+    Boolean,
+    FunctionCall,
+    FunctionDecl,
+    Integer,
+    Lambda,
+    NoOp,
+    Param,
+    Program,
+    NotOp,
+    UnaryOp,
+    NestedLambda
+)
 
 class Parser:
     def __init__(self, lexer: Lexer) -> None:
@@ -93,7 +115,7 @@ class Parser:
                          | "Defun" "{" <function_conf_args> "," <function_conf_name> "}"
 
         <function_conf_name> ::= "'" "name" "'" ":" "'" ID "'"
-        <function_conf_args> ::= "'" "arguments" "'" ":" "(" <formal_parameter_list> ")"
+        <function_conf_args> ::= "'" "arguments" "'" ":" "(" <formal_parameters> ")"
         """
         function_token = self.current_token
 
@@ -159,7 +181,7 @@ class Parser:
 
     def formal_parameters_list(self) -> list[Param]:
         """
-        <formal_parameter_list> ::= <identifier> | <identifier> ',' | <identifier> ',' <formal_parameter_list>
+        <formal_parameters> ::= <identifier> | <identifier> ',' | <identifier> ',' <formal_parameters>
         """
         params = []
 
@@ -250,6 +272,7 @@ class Parser:
                    | "(" <logical_expr> ")"
                    | "!" <logical_expr>
                    | "not" <logical_expr>
+                   | <nested_lambda>
         """
         token = self.current_token
 
@@ -261,12 +284,14 @@ class Parser:
             self.eat(TokenType.BOOLEAN_CONST)
             return Boolean(token)
         
-        #% verify this works now
         elif self.current_token.type == TokenType.LPAREN:
-            self.eat(TokenType.LPAREN)
-            node = self.logical_expr()
-            self.eat(TokenType.RPAREN)
-            return node
+            if self.lexer.peek_next_token().type == TokenType.LAMBDA:
+                return self.nested_lambda()
+            else:
+                self.eat(TokenType.LPAREN)
+                node = self.logical_expr()
+                self.eat(TokenType.RPAREN)
+                return node
         
         elif token.type == TokenType.INTEGER_CONST:
             self.eat(TokenType.INTEGER_CONST)
@@ -286,32 +311,59 @@ class Parser:
         
     def lambda_declaration(self) -> Lambda:
         """
-        <lambda_decleration> ::= "(" "Lambd" <identifier> "." <statement> ")"
+        <lambda_decleration> ::= "(" "Lambd" <formal_parameters> "." <logical_expr> ")"
+                               | "(" "Lambd" <formal_parameters> "." <lambda_declaration> ")"
         """
+        token = self.current_token
         self.eat(TokenType.LPAREN)
         self.eat(TokenType.LAMBDA)
 
-        param = Param(self.current_token)
-        self.eat(TokenType.ID)
-        self.eat(TokenType.DOT)
+        params = self.formal_parameters_list()
 
-        node = self.statement()
+        self.eat(TokenType.DOT)
+        
+        if (
+            self.lexer.peek_next_token().type == TokenType.LPAREN and
+            self.lexer.peek_next_token(2).type == TokenType.LAMBDA
+        ):
+            node = self.lambda_declaration()
+        else:
+            node = self.logical_expr()
+        
         self.eat(TokenType.RPAREN)
 
         return Lambda(
-            param=param,
+            token=token,
+            formal_parameters=params,
             expr_node=node
+        )
+
+    def nested_lambda(self) -> NestedLambda:
+        """
+        <nested_lambda> ::= <lambda_decleration> "(" <actual_parameters> ")"
+        """
+        lambda_node = self.lambda_declaration()
+
+        self.eat(TokenType.LPAREN)
+        
+        actual_param_nodes = self.actual_parameters()
+        
+        self.eat(TokenType.RPAREN)
+        
+        return NestedLambda(
+            lambda_node=lambda_node,
+            actual_params=actual_param_nodes
         )
 
     def function_call(self) -> FunctionCall:
         """
-        <function_call> ::= ID "(" <function_call_parameters> ")"
+        <function_call> ::= ID "(" <actual_parameters> ")"
         """
         token = self.current_token
         self.eat(TokenType.ID)
         self.eat(TokenType.LPAREN)
 
-        params = self.function_call_parameters()
+        params = self.actual_parameters()
         self.eat(TokenType.RPAREN)
         
         return FunctionCall(
@@ -319,17 +371,26 @@ class Parser:
             token=token
         )
     
-    def function_call_parameters(self) -> list[AST]:
+    def actual_parameters(self) -> list[AST]:
         """
-        <function_call_parameters> ::= <logical_expr>
-                                     | <logical_expr> ","
-                                     | <logical_expr> "," <function_call_parameters>
-                                     | <empty>
-        """
+        <actual_parameters> ::= <logical_expr>
+                              | <logical_expr> ","
+                              | <logical_expr> "," <actual_parameters>
+                              | <empty>
+                              | <lambda_decleration> ","  <actual_parameters>
+                              | <lambda_decleration> ","
+                              | <lambda_decleration>
+        """  
         actual_params = []
 
         while self.current_token is not None and self.current_token.type != TokenType.RPAREN:
-            actual_params.append(self.logical_expr())
+            if (
+                self.current_token.type == TokenType.LPAREN and
+                self.lexer.peek_next_token().type == TokenType.LAMBDA
+            ):
+                actual_params.append(self.lambda_declaration())
+            else:
+                actual_params.append(self.logical_expr())
 
             if self.current_token.type == TokenType.COMMA:
                 self.eat(TokenType.COMMA)

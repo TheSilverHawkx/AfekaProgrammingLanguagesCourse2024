@@ -41,7 +41,7 @@ def prompt():
                 print(output)
 
         except KeyboardInterrupt:
-            pass
+            return
         except Exception as e:
             print(f"Error: {e}")
 

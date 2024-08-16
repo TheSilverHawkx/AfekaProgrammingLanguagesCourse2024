@@ -1,7 +1,7 @@
 import pytest
 from src.interpreter.parser import Parser
 from src.interpreter.lexer import Lexer
-from src.interpreter.ast import NotOp, Program, FunctionDecl, Lambda, BinOp, Integer, Boolean, FunctionCall,UnaryOp
+from src.interpreter.ast import NotOp, Program, FunctionDecl, Lambda, BinOp, Integer, Boolean, FunctionCall,UnaryOp,Param,NestedLambda
 from src.interpreter.errors import ParserError
 from src.interpreter.token import TokenType
 
@@ -52,7 +52,7 @@ def test_function_declartion_args_no_comma():
     # Verify Defun {'name': 'factorial', 'arguments': (n,)}
     function_decleration_node: FunctionDecl = ast.statements[0]
     assert function_decleration_node.func_name == 'factorial'
-    assert len(function_decleration_node.params) == 1
+    assert len(function_decleration_node.formal_parameters) == 1
 
     # Verify (n==0) or (n * factorial(n -1))
     assert isinstance(function_decleration_node.expr_node,BinOp)
@@ -89,9 +89,9 @@ def test_function_declaration_correct_structure():
         function_decleration_node: FunctionDecl = ast.statements[0]
         assert function_decleration_node.func_name == 'factorial'
 
-        assert len(function_decleration_node.params) == len(expected_params)
+        assert len(function_decleration_node.formal_parameters) == len(expected_params)
         for index,expected_param_name in enumerate(expected_params):
-            assert function_decleration_node.params[index].name == expected_param_name
+            assert function_decleration_node.formal_parameters[index].name == expected_param_name
 
         # Verify (n==0) or (n * factorial(n -1))
         assert isinstance(function_decleration_node.expr_node,BinOp)
@@ -283,6 +283,56 @@ def test_factor_function_call_expr():
     assert param.right.value == True
     assert param.op.type == TokenType.OR
 
+def test_factor_function_call_lambd():
+    func_name = 'foo'
+    text = f'{func_name}((Lambd x,y. x+y))'
+    ast = get_ast(text)
+
+    assert len(ast.statements) == 1
+    assert isinstance(ast.statements[0],FunctionCall)
+    func_call = ast.statements[0]
+
+    assert func_call.func_name == func_name
+    assert len(func_call.actual_params) == 1
+
+    lambda_decl = func_call.actual_params[0]
+
+    assert isinstance(lambda_decl, Lambda)
+    assert len(lambda_decl.formal_params) == 2
+    assert isinstance(lambda_decl.expr_node,BinOp)
+    bin_op = lambda_decl.expr_node
+    assert isinstance(bin_op.left,Param)
+    assert bin_op.op.type == TokenType.PLUS
+    assert isinstance(bin_op.right,Param)
+
+def test_factor_function_call_nested_lambd():
+    func_name = 'foo'
+    text = f'{func_name}((Lambd x,y. (Lambd z. z+ 5 + x)(y) + 1))'
+    ast = get_ast(text)
+
+    assert len(ast.statements) == 1
+    assert isinstance(ast.statements[0],FunctionCall)
+    func_call = ast.statements[0]
+
+    assert func_call.func_name == func_name
+    assert len(func_call.actual_params) == 1
+
+    lambda_decl = func_call.actual_params[0]
+
+    assert isinstance(lambda_decl, Lambda)
+    assert len(lambda_decl.formal_params) == 2
+    assert isinstance(lambda_decl.expr_node,BinOp)
+    bin_op = lambda_decl.expr_node
+    assert isinstance(bin_op.left,NestedLambda)
+
+    nested_lambda = bin_op.left
+
+    assert len(nested_lambda.lambda_node.formal_params) == 1
+    assert len(nested_lambda.actual_params) == 1
+
+    assert bin_op.op.type == TokenType.PLUS
+    assert isinstance(bin_op.right,Integer)
+
 def test_factor_unary_operation():
     tests = [
         ('-3'    , TokenType.MINUS  ,Integer),
@@ -311,49 +361,3 @@ def test_not_operation():
         assert len(ast.statements) == 1
         assert isinstance(ast.statements[0],NotOp)
         assert isinstance(ast.statements[0].expr,expr_node_type )
-
-def test_lambda_valid_structure():
-    tests = [
-        ("(Lambd x. x+1)", 'x'),
-        ("(Lambd y. 1)", 'y'),
-    ]
-
-    for text,param_name in tests:
-        ast = get_ast(text)
-
-        assert len(ast.statements) == 1
-        assert isinstance(ast.statements[0], Lambda)
-
-        lambd = ast.statements[0]
-        assert lambd.param.name == param_name
-
-def test_lambda_invalid_structure():
-    tests = [
-        '(Lambd x: (x+y))',
-        'Lambd x. (x+y)',
-    ]
-
-    for text in tests:
-        with pytest.raises(ParserError):
-            ast = get_ast(text)
-
-def test_lambda_complex_expression():
-    text = "(Lambd x.(Lambd y. (x + y)))"
-    ast = get_ast(text)
-    
-    assert isinstance(ast, Program)
-    assert len(ast.statements) == 1
-    assert isinstance(ast.statements[0], Lambda)
-
-    # Verify (Lambd x. (Lambd y. (x + y)))
-    lambda1 = ast.statements[0]
-    assert lambda1.param.name == 'x'
-
-    # Verify (Lambd y. (x + y))
-    assert isinstance(lambda1.expr_node,Lambda)
-
-    lambda2 = lambda1.expr_node
-    assert lambda2.param.name == 'y'
-
-    # Verify x + y
-    assert isinstance(lambda2.expr_node,BinOp)

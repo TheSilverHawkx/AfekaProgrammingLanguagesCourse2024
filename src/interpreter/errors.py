@@ -7,6 +7,7 @@ class ErrorCode(Enum):
     DUPLICATE_SYMBOL    = 'Duplicate symbol found'
     SYMBOL_NOT_FOUND    = 'Symbol not found'
     UNEQUAL_PARAM_COUNT = 'Function actual parameters count does not match formal parameters count'
+    UNEXPECTED_SYMBOL    = 'Unexpected symbol'
 
 class Error(Exception):
     def __init__(self, error_code=None, token=None, message=None):
@@ -22,4 +23,7 @@ class ParserError(Error):
     pass
 
 class SemanticError(Error):
+    pass
+
+class InterpreterError(Error):
     pass

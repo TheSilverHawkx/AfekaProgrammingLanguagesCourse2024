@@ -1,11 +1,10 @@
 # Function definition
 Defun {'name': 'factorial', 'arguments': (n,)}
  (n == 0) or (n * factorial(n - 1))
-# Lambda expression
-(Lambd x.(Lambd y. (x + y)))
+
+
 # Function application
 factorial(5)
-# Boolean operations
-# (x > 0) && (y < 10)
+
 # Arithmetic operations
 (3 + 4) * (2 - 1)

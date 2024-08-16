@@ -39,6 +39,9 @@ class ActivationRecord:
     def __getitem__(self, key: str):
         return self.members.get(key)
     
+    def update(self, kvp: dict):
+        self.members.update(kvp)
+
     def __str__(self):
         lines = [
             '{level}: {type} {name}'.format(

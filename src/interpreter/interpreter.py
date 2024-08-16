@@ -1,6 +1,22 @@
-from .token import TokenType
-from .ast import AST,BinOp,Boolean,FunctionCall,FunctionDecl,Integer,Lambda,NoOp,NotOp,Param,Program,UnaryOp
+from .token import TokenType,Token
+from .ast import (
+    AST,
+    BinOp,
+    Boolean,
+    FunctionCall,
+    FunctionDecl,
+    Integer,
+    Lambda,
+    NoOp,
+    NotOp,
+    Param,
+    Program,
+    UnaryOp,
+    NestedLambda
+)
 from .stack import ActivationRecord,CallStack,ARType
+from .symbol import CallableSymbol
+from .errors import ErrorCode,InterpreterError
 
 class NodeVisitor(object):
     """Base class for traversing nodes in an Abstract Syntax Tree (AST).
@@ -51,6 +67,9 @@ class Interpreter(NodeVisitor):
     """
     def __init__(self) -> None:
         self.call_stack = CallStack()
+
+    def error(self,error_code: ErrorCode, token: Token):
+        raise InterpreterError(error_code,token)
 
     def visit_Program(self,node: Program):
         """Handles a Program node and executes all its statements.
@@ -177,7 +196,7 @@ class Interpreter(NodeVisitor):
         Args:
             node (FunctionDecl): The FunctionDecl AST node.
         """
-        pass
+        self.call_stack.peek()[node.func_name] = node.symbol
 
     def visit_Param(self, node: Param):
         """Retrieves the value of a parameter from the current activation record.
@@ -191,8 +210,7 @@ class Interpreter(NodeVisitor):
         Returns:
             The value of the parameter.
         """
-        ar = self.call_stack.peek()
-        return ar[node.name]
+        return self.call_stack.peek()[node.name]
 
     def visit_UnaryOp(self, node: UnaryOp):
         """Evaluates a unary operation node.
@@ -216,8 +234,38 @@ class Interpreter(NodeVisitor):
                 return - (self.visit(node.expr))
 
     def visit_Lambda(self, node: Lambda):
-        # TODO: Don't know how this should be implemented yet
-        pass
+        return node.symbol
+
+    def visit_NestedLambda(self, node: NestedLambda) :
+        current_ar = self.call_stack.peek()
+        ar = ActivationRecord(
+            name=node.lambda_node.lambda_name,
+            type=ARType.FUNCTION,
+            nesting_level=self.call_stack.peek().nesting_level +1
+        )
+        ar.update(current_ar.members)
+        
+        lambda_symbol = node.lambda_node.symbol
+
+        if lambda_symbol is None:
+            self.error(
+                error_code=ErrorCode.SYMBOL_NOT_FOUND,
+                token=node.lambda_node.token
+            )
+
+        formal_params = lambda_symbol.formal_params
+        actual_params = node.actual_params
+
+        for param_symbol, arg_node in zip(formal_params,actual_params):
+            ar[param_symbol.name] = self.visit(arg_node)
+
+        self.call_stack.push(ar)
+
+        output = self.visit(lambda_symbol.expr_ast)
+
+        self.call_stack.pop()
+
+        return output
 
     def visit_FunctionCall(self, node: FunctionCall):
         """Handles function call nodes.
@@ -231,15 +279,26 @@ class Interpreter(NodeVisitor):
         Returns:
             The result of the function call.
         """
-        func_name = node.func_name
-
+        current_ar = self.call_stack.peek()
         ar = ActivationRecord(
-            name=func_name,
+            name=node.func_name,
             type=ARType.FUNCTION,
             nesting_level=self.call_stack.peek().nesting_level +1
         )
+        ar.update(current_ar.members)
 
-        func_symbol = node.func_symbol
+        func_symbol: CallableSymbol | None = current_ar[node.func_name]
+
+        if func_symbol is None:
+            self.error(
+                error_code=ErrorCode.SYMBOL_NOT_FOUND,
+                token=node.token
+            )
+        elif not isinstance(func_symbol, CallableSymbol):
+            self.error(
+                error_code=ErrorCode.UNEXPECTED_SYMBOL,
+                token=node.token
+            )
 
         formal_params = func_symbol.formal_params
         actual_params = node.actual_params

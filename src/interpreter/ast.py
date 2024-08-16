@@ -1,6 +1,6 @@
 from .token import Token
 from uuid import uuid4
-from .symbol import FunctionSymbol
+from .symbol import CallableSymbol
 from abc import ABCMeta
 
 class AST(metaclass=ABCMeta):
@@ -13,7 +13,6 @@ class AST(metaclass=ABCMeta):
     def __repr__(self) -> str:
         return self.__str__()
   
-
 class Program(AST):
     """
     Represents the entire program in the AST. Contains a list of statements.
@@ -134,11 +133,12 @@ class FunctionDecl(AST):
     """
     def __init__(self, name:str, params: list[Param], expr_node: AST):
         self.func_name = name
-        self.params = params
+        self.formal_parameters = params
         self.expr_node = expr_node
+        self.symbol: CallableSymbol = None
 
     def __str__(self) -> str:
-        param_str = [str(param) for param in self.params]
+        param_str = [str(param) for param in self.formal_parameters]
         return f"{super().__str__()}(name={self.func_name}, params=[{",".join(param_str)}], expr={self.expr_node})"
     
 class FunctionCall(AST):
@@ -149,7 +149,7 @@ class FunctionCall(AST):
         token (Token): The token representing the function being called.
         func_name (str): The name of the function being called.
         actual_params (list[AST]): A list of parameter nodes representing the actual arguments passed to the function.
-        func_symbol (FunctionSymbol): The symbol representing the function in the symbol table.
+        symbol (CallableSymbol): The symbol representing the function in the symbol table.
 
     Usage:
         func_call_node = FunctionCall(token=call_token, actual_params=[arg1, arg2])
@@ -158,7 +158,7 @@ class FunctionCall(AST):
         self.token = token
         self.func_name: str = token.value
         self.actual_params = actual_params
-        self.func_symbol: FunctionSymbol = None
+        self.symbol: CallableSymbol = None
     
     def __str__(self) -> str:
         param_str = [str(param) for param in self.actual_params]
@@ -170,20 +170,29 @@ class Lambda(AST):
 
     Attributes:
         lambda_name (str): The unique name of the lambda expression, generated using a UUID.
-        param (Param): The parameter of the lambda expression.
+        param (List[Param]): The parameter of the lambda expression.
         expr_node (AST): The body expression of the lambda.
+        symbol (CallableSymbol): The symbol representing the lambda in the symbol table.
+
 
     Usage:
-        lambda_node = Lambda(param=param, expr_node=body_expr)
+        lambda_node = Lambda(formal_parameters=params, expr_node=body_expr)
     """
-    def __init__(self,param:Param, expr_node: AST) -> None:
-        self.lambda_name:str = f"lambda_{str(uuid4())[:8]}"
-        self.param = param
+    def __init__(self,token: Token, formal_parameters:list[Param], expr_node: AST) -> None:
+        self.lambda_name:str = f"lambda_{str(uuid4())[:8]}" # TODO: consider removing
+        self.token =token
+        self.formal_params = formal_parameters
         self.expr_node = expr_node
+        self.symbol: CallableSymbol = None
 
     def __str__(self):
         return f"{super().__str__()}(name={self.lambda_name}, param={self.param}, expr={self.expr_node})"
-    
+
+class NestedLambda(AST):
+    def __init__(self, lambda_node: Lambda, actual_params: list[AST]) -> None:
+        self.lambda_node = lambda_node
+        self.actual_params = actual_params
+
 class NoOp(AST):
     """
     Represents a no operation node in the AST.

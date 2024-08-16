@@ -2,9 +2,10 @@
 import pytest
 from src.interpreter.lexer import Lexer
 from src.interpreter.parser import Parser
-from src.interpreter.analyzer import SemanticAnalyzer
+from src.interpreter.semantic_analyzer import SemanticAnalyzer
 from src.interpreter.interpreter import Interpreter
 from src.interpreter.ast import AST
+from src.interpreter.errors import InterpreterError
 
 def get_ast(text:str)-> AST:
     tree =  Parser(Lexer(text)).parse()
@@ -66,9 +67,33 @@ def test_function_declaration_call():
     result = next(interpreter.interpret(get_ast(text)))
     assert result == 10
 
-# def test_lambda_expression():
-#     text = "(Lambd x.(Lambd y. (x + y)))(3)(4)"
-#     interpreter = Interpreter()
+def test_lambda_expression():
+    text = """
+    Defun {'name': 'foo', 'arguments': (n)}
+    n(2,2)
 
-#     result = next(interpreter.interpret(get_ast(text)))
-#     assert result == 7
+    foo((Lambd x,y. x+y))
+    foo((Lambd x,y. x*y))
+    foo((Lambd x,y. x==y))
+    foo((Lambd x,y. (Lambd z. z + 1 + (Lambd r. r * r)(x))(y)))
+    """
+
+    results = [4,4,True,7]
+    counter = 0
+    interpreter = Interpreter()
+    tree = get_ast(text)
+
+    for result in interpreter.interpret(tree):
+        assert results[counter] == result
+        counter +=1
+
+def test_function_call_no_lambda():
+    text = """
+    Defun {'name': 'foo', 'arguments': (n)}
+    n(2,2)
+
+    foo(5)
+    """
+    interpreter = Interpreter()
+    with pytest.raises(InterpreterError):
+        next(interpreter.interpret(get_ast(text)))

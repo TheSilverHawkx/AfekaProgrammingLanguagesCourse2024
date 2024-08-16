@@ -6,7 +6,10 @@ This section provides examples of code written in the custom language, along wit
 ## Example 1: Lambda Expression
 
 ```
->>> (Lambd x . (x + 2))
+>>> Defun {'name': 'arithmetic', 'arguments': (func,x, y)}
+... func(x,y)
+>>> arithmetic((Lambd x,y. x + y), 5,7)
+12
 ```
 
 This defines a lambda function that takes one argument `x` and returns the result of `x + 2`.

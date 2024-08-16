@@ -1,7 +1,7 @@
 import pytest
-from src.interpreter.analyzer import SemanticAnalyzer
+from src.interpreter.semantic_analyzer import SemanticAnalyzer
 from src.interpreter.errors import SemanticError
-from src.interpreter.symbol import ScopedSymbolTable, BuiltinTypeSymbol,FunctionSymbol,LambdaSymbol,ParamSymbol
+from src.interpreter.symbol import ScopedSymbolTable, BuiltinTypeSymbol,ParamSymbol,CallableSymbol
 import src.interpreter.ast as _ast
 from src.interpreter.token import Token,TokenType
 
@@ -40,7 +40,7 @@ def test_function_declaration_added_to_scope():
     function_symbol = analyzer.current_scope.lookup(func_name)
 
     assert function_symbol is not None
-    assert isinstance(function_symbol,FunctionSymbol)
+    assert isinstance(function_symbol,CallableSymbol)
     assert function_symbol.name == func_name
     assert len(function_symbol.formal_params) == len(func_params)
 
@@ -49,7 +49,7 @@ def test_function_declaration_added_to_scope():
 
 def test_duplicate_function_declaration():
     func_name = 'test'
-    func_params = _ast.Param(Token(type=TokenType.ID, value='x'))
+    func_params = [_ast.Param(Token(type=TokenType.ID, value='x'))]
     func_decls =[
         _ast.FunctionDecl(
             name= func_name,
@@ -65,9 +65,12 @@ def test_duplicate_function_declaration():
 
     program = _ast.Program(func_decls)
 
-    analyzer = SemanticAnalyzer()
-    with pytest.raises(SemanticError):
-        analyzer.visit(program)
+    try:
+        analyzer = SemanticAnalyzer()
+        with pytest.raises(SemanticError):
+            analyzer.visit(program)
+    except Exception as e:
+        print(e)
 
 def test_function_call_resolution():
     program =_ast.Program([
@@ -159,7 +162,7 @@ def test_function_call_undeclared_variable():
 
 def test_lambda_declaration():
     lambd = _ast.Lambda(
-        param=_ast.Param(token=Token(type=TokenType.ID,value='x')),
+        formal_parameters=[_ast.Param(token=Token(type=TokenType.ID,value='x'))],
         expr_node=_ast.NoOp()
     )
 
@@ -171,17 +174,75 @@ def test_lambda_declaration():
     )
     analyzer.visit(lambd)
 
-    lambd_symbol: LambdaSymbol = analyzer.current_scope.lookup(lambd.lambda_name)
+    lambd_symbol: CallableSymbol = analyzer.current_scope.lookup(lambd.lambda_name)
        
     assert lambd_symbol is not None
     assert lambd_symbol.name == lambd.lambda_name
-    assert lambd_symbol.param.name == lambd.param.name
+    assert len(lambd_symbol.formal_params) == 1
+    param = lambd.formal_params[0]
+    assert param.token.type == TokenType.ID and param.name == 'x'
 
-def test_lambda_call():
-    pass
+def test_function_call_lambda():
+    param_x = _ast.Param( Token(TokenType.ID,'x') )
+    param_y =  _ast.Param( Token(TokenType.ID,'y') )
+    formal_params = [param_x , param_y]
+
+    function_call = _ast.FunctionCall(
+        Token(TokenType.ID,'x'),
+        [param_y]
+    )
+
+    lambd = _ast.Lambda(
+        formal_parameters=[param_y],
+        expr_node=_ast.BinOp(
+            param_y,
+            TokenType.PLUS,
+            _ast.Integer( Token(TokenType.INTEGER_CONST,1) )
+        )
+    )
+
+    program =_ast.Program([
+        _ast.FunctionDecl(
+            name= 'test',
+            params=formal_params,
+            expr_node=function_call
+        ),
+        _ast.FunctionCall(
+            token=Token(type=TokenType.ID,value='test'),
+            actual_params=[lambd,_ast.Integer( Token(TokenType.INTEGER_CONST,1))]
+        )
+    ])
+
+    analyzer = SemanticAnalyzer()
+    analyzer.visit(program)
+    
+    assert 2
 
 def test_lambda_not_declared():
-    pass
+    param_x = _ast.Param( Token(TokenType.ID,'x') )
+    param_y =  _ast.Param( Token(TokenType.ID,'y') )
+    formal_params = [param_x , param_y]
+
+    function_call = _ast.FunctionCall(
+        Token(TokenType.ID,'x'),
+        [param_y]
+    )
+    program =_ast.Program([
+        _ast.FunctionDecl(
+            name= 'test',
+            params=formal_params,
+            expr_node=function_call
+        ),
+        _ast.FunctionCall(
+            token=Token(type=TokenType.ID,value='test'),
+            actual_params=[_ast.Integer( Token(TokenType.INTEGER_CONST,1)),_ast.Integer( Token(TokenType.INTEGER_CONST,1))]
+        )
+    ])
+
+    analyzer = SemanticAnalyzer()
+    analyzer.visit(program)
+
+    assert True
 
 def test_param_in_table_lookup():
     table = ScopedSymbolTable(

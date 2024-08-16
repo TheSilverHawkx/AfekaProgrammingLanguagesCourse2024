@@ -11,28 +11,30 @@ This document provides a detailed description of the Backus-Naur Form (BNF) gram
 <statement_list> ::= <statement> | <statement> <statement_list>
 
 <statement> ::= <empty>
-              | <lambda_decleration>
               | <function_declaration>
               | <logical_expr> 
               | "(" <statement> ")"
 
-<lambda_decleration> ::= "(" "Lambd" <identifier> "." <logical_expr> ")"
+<lambda_decleration> ::= "(" "Lambd" <formal_parameters> "." <logical_expr> ")"
+                       | "(" "Lambd" <formal_parameters> "." <lambda_decleration> ")"
+
+<nested_lambda> ::= <lambda_decleration> "(" <actual_parameters> ")"
 
 <function_declaration> ::= "Defun" "{" <function_conf_name> "," <function_conf_args> "}" <logical_expr>
                          | "Defun" "{" <function_conf_args> "," <function_conf_name> "}" <logical_expr>
 
-<function_conf_name> ::= "'" "name" "'" ":" "'" ID "'"
-<function_conf_args> ::= "'" "arguments" "'" ":" "(" <formal_parameter_list> ")"
+<function_conf_name> ::= "'" "name" "'" ":" "'" <identifier> "'"
+<function_conf_args> ::= "'" "arguments" "'" ":" "(" <formal_parameters> ")"
 
-<formal_parameter_list> ::= <identifier> | <identifier> ',' | <identifier> ',' <formal_parameter_list>
+<formal_parameters> ::= <identifier>
+                      | <identifier> ','
+                      | <identifier> ',' <formal_parameters>
 
 
 <logical_expr>  ::= <compare_expr> | <compare_expr> <binary_op> <logical_expr>
 <compare_expr>  ::= <addition_expr> | <addition_expr> <compare_op> <addition_expr>
 <addition_expr> ::= <multiplication_expr> | <multiplication_expr> <addition_op> <addition_expr>
 <multiplication_expr> ::= <factor> | <factor> <mult_op> <multiplication_expr>
-
-
 <factor> ::= <integer>
            | <boolean>
            | <function_call>
@@ -41,12 +43,17 @@ This document provides a detailed description of the Backus-Naur Form (BNF) gram
            | "!" <logical_expr>
            | "not" <logical_expr>
            | <addition_op> <factor>
+           | <nested_lambda>
 
-<function_call> ::= <identifier> "(" <function_call_parameters> ")"
-<function_call_parameters> ::= <logical_expr>
-                             | <logical_expr> ","
-                             | <logical_expr> "," <function_call_parameters>
-                             | <empty>
+<function_call> ::= <identifier> "(" <actual_parameters> ")"
+<actual_parameters> ::= <logical_expr>
+                      | <logical_expr> ","
+                      | <logical_expr> "," <actual_parameters>
+                      | <empty>
+                      | <lambda_decleration> ","  <actual_parameters>
+                      | <lambda_decleration> ","
+                      | <lambda_decleration>
+
 
 <integer>       ::= <digit> | <digit> <integer>
 <identifier>    ::= <character>
@@ -80,16 +87,19 @@ Symbol Structure
 **`<statement>`**: Represents the different types of executable instructions within the program.
   ```bnf
   <statement> ::= <empty>
-                | <lambda_decleration>
-                | <function_declaration>
-                | <logical_expr> 
-                | "(" <statement> ")"
+              | <function_declaration>
+              | <logical_expr> 
+              | "(" <statement> ")"
   ```
 
-### Lambda Declaration
-**`<lambda_decleration>`**: Defines an anonymous function (lambda) with one parameter and a body expression.
+### Lambda
+* **`<lambda_decleration>`**: Defines an annonymous function (lambda) with parameters and an expression or a declaration
   ```bnf
-  <lambda_decleration> ::= "(" "Lambd" <identifier> "." <logical_expr> ")"
+  <lambda_decleration> ::= "(" "Lambd" <formal_parameters> "." <logical_expr> ")"
+  ```
+* **`<nested_lambda>`**: Defined an annonymous function and it's call within another a statement.
+  ```bnf
+  <nested_lambda> ::= <lambda_decleration> "(" <actual_parameters> ")"
   ```
 
 ### Function Declaration
@@ -107,14 +117,14 @@ The order of the function's configuration is dynamic.
 
 - **`<function_conf_args>`**: Specifies the arguments of the function.
   ```bnf
-  <function_conf_args> ::= "'" "arguments" "'" ":" "(" <formal_parameter_list> ")"
+  <function_conf_args> ::= "'" "arguments" "'" ":" "(" <formal_parameters> ")"
   ```
 
 ### Formal Parameter List
-**`<formal_parameter_list>`**: Defines the list of parameters for a function.
+**`<formal_parameters>`**: Defines the list of parameters for a function.
 The symbol has multiple productions to account for the optional positioning of a comma (`,`) after the last parameter.
   ```bnf
-  <formal_parameter_list> ::= <identifier> | <identifier> ',' | <identifier> ',' <formal_parameter_list>
+  <formal_parameters> ::= <identifier> | <identifier> ',' | <identifier> ',' <formal_parameters>
   ```
 
 ### Logical Expressions
@@ -163,15 +173,18 @@ Note: parenthesis encapsulation is also implemented here to implement PEMDAS rul
 ### Function Call
 - **`<function_call>`**: Represents a call to a function with parameters.
   ```bnf
-  <function_call> ::= <identifier> "(" <function_call_parameters> ")"
+  <function_call> ::= <identifier> "(" <actual_parameters> ")"
   ```
 
-- **`<function_call_parameters>`**: The parameters passed to a function call.
+- **`<actual_parameters>`**: The parameters passed to a function call.
   ```bnf
-  <function_call_parameters> ::= <logical_expr>
-                               | <logical_expr> ","
-                               | <logical_expr> "," <function_call_parameters>
-                               | <empty>
+  <actual_parameters> ::= <logical_expr>
+                      | <logical_expr> ","
+                      | <logical_expr> "," <actual_parameters>
+                      | <empty>
+                      | <lambda_decleration> ","  <actual_parameters>
+                      | <lambda_decleration> ","
+                      | <lambda_decleration>
   ```
 
 ### Terminal Symbols

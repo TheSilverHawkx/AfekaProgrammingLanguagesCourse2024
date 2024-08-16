@@ -64,20 +64,6 @@ class Lexer:
             self.current_char = self.text[self.pos]
             self.column += 1
 
-    def advance_if_match(self, char:str) -> None:
-        """Advances the lexer if the current character matches the specified character.
-
-        Args:
-            char (str): The character to match against the current character.
-
-        Raises:
-            LexerError: If the current character does not match the specified character.
-        """
-        if self.current_char == char:
-            self.advance()
-        else:
-            self._error()
-
     def peek(self) -> str:
         """Returns the character at `self.pos + 1` without consuming it.
 
@@ -90,20 +76,22 @@ class Lexer:
 
         return self.text[peek_pos] if peek_pos <= len(self.text) - 1 else None
     
-    def peek_next_token(self) -> Token:
-        """Peeks at the next token without consuming it.
+    def peek_next_token(self, n = 1) -> Token:
+        """Peeks at n-th token from the current position without consuming it.
 
-        This method saves the current position, advances to get the next token, 
+        This method saves the current position, advances to get the n-th token, 
         then restores the original position.
 
         Returns:
-            Token: The next token in the input text.
+            Token: The n-th token in the input text from the current position.
         """
         origin_pos = self.pos
         origin_lineo = self.lineno
         origin_column = self.column
 
-        token = self.get_next_token()
+        for i in range(0,n):
+            token = self.get_next_token()
+            
         self.pos = origin_pos
         self.lineno = origin_lineo
         self.column = origin_column

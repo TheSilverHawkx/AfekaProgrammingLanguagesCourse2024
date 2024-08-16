@@ -61,11 +61,11 @@ class ParamSymbol(Symbol):
 
     __repr__ = __str__
 
-class FunctionSymbol(Symbol):
-    """Represents a function symbol in the symbol table.
+class CallableSymbol(Symbol):
+    """Represents a function / Lambda symbol in the symbol table.
 
     Function symbols include information about the function, such as:
-    name, its formal parameters, and the associated AST for the function body.
+    name, its formal parameters, and the associated expression AST node.
 
     Attributes:
         name (str): The name of the function.
@@ -77,6 +77,22 @@ class FunctionSymbol(Symbol):
         param2 = Param(token=param_token2)
         func_symbol = FunctionSymbol(name='foo', formal_params=[param1, param2])
     """
+    def __init__(self, name, formal_params: list[ParamSymbol]=[]) -> None:
+        super().__init__(name)
+
+        self.formal_params = formal_params
+        self.expr_ast = None
+
+    def __str__(self) -> str:
+        return '<{class_name}(name={name}, parameters={params})>'.format(
+            class_name=self.__class__.__name__,
+            name=self.name,
+            params=self.formal_params,
+        )
+
+    __repr__ = __str__
+
+class FunctionSymbol(Symbol):
     def __init__(self, name, formal_params: list[ParamSymbol]=[]) -> None:
         super(FunctionSymbol,self).__init__(name)
 
@@ -100,16 +116,16 @@ class LambdaSymbol(Symbol):
 
     Attributes:
         name (str): The name of the lambda.
-        param (ParamSymbol): The parameter of the lambda.
+        params (List[ParamSymbol]): The parameters of the lambda.
         expr_ast (AST): The AST representing the lambda's body.
 
     Usage:
         lambda_symbol = LambdaSymbol(name='lambda_1', param=param)
     """
     
-    def __init__(self, name: str, param: ParamSymbol = None) -> None:
+    def __init__(self, name: str, params: list[ParamSymbol] = []) -> None:
         super(LambdaSymbol,self).__init__(name)
-        self.param = param
+        self.params = params
         self.expr_ast = None
 
     def __str__(self) -> str:
@@ -151,6 +167,7 @@ class ScopedSymbolTable(object):
         """ Initialize built-in data types """
         self.insert(BuiltinTypeSymbol('INTEGER'))
         self.insert(BuiltinTypeSymbol('BOOLEAN'))
+        self.insert(BuiltinTypeSymbol('FUNCTION'))
 
     def __str__(self):
         h1 = 'SCOPE (SCOPED SYMBOL TABLE)'

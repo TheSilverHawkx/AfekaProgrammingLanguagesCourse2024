@@ -1,0 +1,7 @@
+Defun {'name': 'foo', 'arguments': (n)}
+ n(2,2)
+
+#foo((Lambd x,y. x+y))
+#foo((Lambd x,y. x*y))
+#foo((Lambd x,y. x==y))
+foo((Lambd x,y. (Lambd z. z + 1 + (Lambd r. r * r)(x))(y)))
