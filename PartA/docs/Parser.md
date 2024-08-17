@@ -5,7 +5,7 @@ The parser takes the tokens produced by the [lexer](./Lexer.md) and arranges the
 
 ## BNF Grammar
 
-The parser follows the BNF grammar defined in [BNF.txt](../BNF.txt). This grammar specifies how different language constructs (like expressions, statements, and functions) are formed.
+The parser follows the BNF grammar defined in [BNF.txt](./BNF.md). This grammar specifies how different language constructs (like expressions, statements, and functions) are formed.
 
 ## Example
 
