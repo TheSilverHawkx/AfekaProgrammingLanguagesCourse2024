@@ -193,7 +193,6 @@ class SemanticAnalyzer(NodeVisitor):
 
         map(lambda x: self.visit(x),node.actual_params)
 
-
     def visit_NotOp(self, node: NotOp) -> None:
         """
         Handles a logical NOT operation AST node.

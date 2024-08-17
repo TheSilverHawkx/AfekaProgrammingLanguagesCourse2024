@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Self
 
 class ARType(Enum):
     """
@@ -27,11 +28,20 @@ class ActivationRecord:
         ar = ActivationRecord(name='main', type=ARType.PROGRAM, nesting_level=1)
         ar['var1'] = 10
     """
-    def __init__(self, name: str, type: ARType, nesting_level: int) -> None:
+    def __init__(
+            self,
+            name: str,
+            type: ARType,
+            nesting_level: int,
+            old_ar: Self = None
+        ) -> None:
         self.name = name
         self.type = type
         self.nesting_level = nesting_level
         self.members = {}
+
+        if old_ar is not None:
+            self.members.update(old_ar.members)
     
     def __setitem__(self,key: str,value):
         self.members[key] = value

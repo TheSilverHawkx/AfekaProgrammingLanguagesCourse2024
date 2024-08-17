@@ -92,51 +92,6 @@ class CallableSymbol(Symbol):
 
     __repr__ = __str__
 
-class FunctionSymbol(Symbol):
-    def __init__(self, name, formal_params: list[ParamSymbol]=[]) -> None:
-        super(FunctionSymbol,self).__init__(name)
-
-        self.formal_params = formal_params
-        self.expr_ast = None
-
-    def __str__(self) -> str:
-        return '<{class_name}(name={name}, parameters={params})>'.format(
-            class_name=self.__class__.__name__,
-            name=self.name,
-            params=self.formal_params,
-        )
-
-    __repr__ = __str__
-
-class LambdaSymbol(Symbol):
-    """Represents a lambda symbol in the symbol table.
-
-    Lambda symbols include information about the lambda's name, 
-    its parameter, and the associated AST node for the lambda expression.
-
-    Attributes:
-        name (str): The name of the lambda.
-        params (List[ParamSymbol]): The parameters of the lambda.
-        expr_ast (AST): The AST representing the lambda's body.
-
-    Usage:
-        lambda_symbol = LambdaSymbol(name='lambda_1', param=param)
-    """
-    
-    def __init__(self, name: str, params: list[ParamSymbol] = []) -> None:
-        super(LambdaSymbol,self).__init__(name)
-        self.params = params
-        self.expr_ast = None
-
-    def __str__(self) -> str:
-        return '<{class_name}(name={name}, parameter={params})>'.format(
-            class_name=self.__class__.__name__,
-            name=self.name,
-            params=self.param,
-        )
-
-    __repr__ = __str__
-
 class ScopedSymbolTable(object):
     """Represents a scoped symbol table for tracking symbols in various scopes.
 

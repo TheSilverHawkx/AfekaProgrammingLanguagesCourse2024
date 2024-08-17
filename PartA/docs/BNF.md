@@ -93,11 +93,11 @@ Symbol Structure
   ```
 
 ### Lambda
-* **`<lambda_decleration>`**: Defines an annonymous function (lambda) with parameters and an expression or a declaration
+* **`<lambda_decleration>`**: Defines an anonymous  function (lambda) with parameters and an expression or a declaration
   ```bnf
   <lambda_decleration> ::= "(" "Lambd" <formal_parameters> "." <logical_expr> ")"
   ```
-* **`<nested_lambda>`**: Defined an annonymous function and it's call within another a statement.
+* **`<nested_lambda>`**: Defined an anonymous  function and it's call within another a statement.
   ```bnf
   <nested_lambda> ::= <lambda_decleration> "(" <actual_parameters> ")"
   ```

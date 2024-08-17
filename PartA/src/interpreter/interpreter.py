@@ -241,9 +241,9 @@ class Interpreter(NodeVisitor):
         ar = ActivationRecord(
             name=node.lambda_node.lambda_name,
             type=ARType.FUNCTION,
-            nesting_level=self.call_stack.peek().nesting_level +1
+            nesting_level=self.call_stack.peek().nesting_level +1,
+            old_ar=current_ar
         )
-        ar.update(current_ar.members)
         
         lambda_symbol = node.lambda_node.symbol
 
@@ -283,9 +283,9 @@ class Interpreter(NodeVisitor):
         ar = ActivationRecord(
             name=node.func_name,
             type=ARType.FUNCTION,
-            nesting_level=self.call_stack.peek().nesting_level +1
+            nesting_level=self.call_stack.peek().nesting_level +1,
+            old_ar=current_ar
         )
-        ar.update(current_ar.members)
 
         func_symbol: CallableSymbol | None = current_ar[node.func_name]
 

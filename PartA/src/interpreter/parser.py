@@ -122,8 +122,7 @@ class Parser:
         self.eat(TokenType.FUNCTION_DECL)
         self.eat(TokenType.LCURL)
 
-        function_config = { x.value: None for x in FunctionConfigurationKey}
-        is_first_field = False
+        function_config = { x.value: None for x in FunctionConfigurationKey }
 
         while self.current_token is not None and self.current_token.type is not TokenType.RCURL:
             self.eat(TokenType.QUOTE)
@@ -212,10 +211,10 @@ class Parser:
     
     def compare_expr(self) -> AST:
         """
-        <compare_expr> ::= <additive_expr> | <additive_expr> <compare_op> <additive_expr>
+        <compare_expr> ::= <addition_expr> | <addition_expr> <compare_op> <addition_expr>
         """
 
-        left = self.additive_expr()
+        left = self.addition_expr()
 
         op_token = self.current_token
         
@@ -224,28 +223,26 @@ class Parser:
         else:
             return left
             
-        return BinOp(left=left,op=op_token,right=self.additive_expr())
+        return BinOp(left=left,op=op_token,right=self.addition_expr())
         
-    def additive_expr(self) -> AST:
+    def addition_expr(self) -> AST:
         """
-        <additive_expr> ::= <multiplicative_expr> | <multiplicative_expr> <addition_op> <additive_expr>
+        <addition_expr> ::= <multiplication_expr> | <multiplication_expr> <addition_op> <addition_expr>
         """
 
-        left = self.multiplicative_expr()
+        left = self.multiplication_expr()
 
         while self.current_token is not None and self.current_token.value in ADDITION_OPERATORS:
             op_token = self.current_token
             self.eat(op_token.type)
 
-            left = BinOp(left=left,op=op_token,right=self.additive_expr())
+            left = BinOp(left=left,op=op_token,right=self.addition_expr())
         
         return left
         
-    def multiplicative_expr(self) -> AST:
+    def multiplication_expr(self) -> AST:
         """
-        <multiplicative_expr> ::= <factor>
-                                | <factor> <mult_op> <multiplicative_expr>
-                                | <addition_op> <factor>
+        <multiplication_expr> ::= <factor> | <factor> <mult_op> <multiplication_expr>
         """
 
         if self.current_token.type in (TokenType.PLUS, TokenType.MINUS):
@@ -259,7 +256,7 @@ class Parser:
             op_token = self.current_token
             self.eat(op_token.type)
 
-            left = BinOp(left=left, op=op_token,right=self.multiplicative_expr())
+            left = BinOp(left=left, op=op_token,right=self.multiplication_expr())
 
         return left
     
