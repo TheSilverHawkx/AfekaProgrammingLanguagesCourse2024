@@ -40,8 +40,8 @@ This document provides a detailed description of the Backus-Naur Form (BNF) gram
            | <function_call>
            | <identifier>
            | "(" <logical_expr> ")"
-           | "!" <logical_expr>
-           | "not" <logical_expr>
+           | "!" <factor>
+           | "not" <factor>
            | <addition_op> <factor>
            | <nested_lambda>
 
@@ -165,8 +165,8 @@ Note: parenthesis encapsulation is also implemented here to implement PEMDAS rul
              | <function_call>
              | <identifier>
              | "(" <logical_expr> ")"
-             | "!" <logical_expr>
-             | "not" <logical_expr>
+             | "!" <factor>
+             | "not" <factor>
              | <addition_op> <factor>
   ```
 

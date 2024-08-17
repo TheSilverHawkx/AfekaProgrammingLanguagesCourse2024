@@ -74,10 +74,10 @@ class CallableSymbol(Symbol):
         param2 = Param(token=param_token2)
         func_symbol = FunctionSymbol(name='foo', formal_params=[param1, param2])
     """
-    def __init__(self, name, formal_params: list[ParamSymbol]=[]) -> None:
+    def __init__(self, name, formal_params: list[ParamSymbol]=None) -> None:
         super().__init__(name)
 
-        self.formal_params = formal_params
+        self.formal_params = [] if formal_params is None else formal_params
         self.expr_ast = None
 
     def __str__(self) -> str:

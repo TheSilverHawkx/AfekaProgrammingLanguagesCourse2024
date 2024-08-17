@@ -267,15 +267,15 @@ class Parser:
                    | <function_call>
                    | <identifier>
                    | "(" <logical_expr> ")"
-                   | "!" <logical_expr>
-                   | "not" <logical_expr>
+                   | "!" <factor>
+                   | "not" <factor>
                    | <nested_lambda>
         """
         token = self.current_token
 
         if token.type == TokenType.NOT:
             self.eat(TokenType.NOT)
-            return NotOp(self.logical_expr())
+            return NotOp(self.factor())
 
         if token.type == TokenType.BOOLEAN_CONST:
             self.eat(TokenType.BOOLEAN_CONST)

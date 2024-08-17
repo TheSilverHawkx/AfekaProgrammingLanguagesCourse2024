@@ -1,0 +1,42 @@
+Defun {'name': 'while', 'arguments': (condition,step,n, func)}
+  !condition(step(n)) or (func(n) + while(condition,step,step(n),func))
+
+Defun {'name': 'sumRecursive', 'arguments': (n)}
+  (n == 1 ) or ( n + sumRecursive(n-1))
+
+Defun {'name': 'sum', 'arguments': (n)}
+  n
+
+#sumRecursive(10)
+
+while(
+    (Lambd x. x < 2),
+    (Lambd x. x + 1),
+    0,
+    sum
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#=======================
+#END

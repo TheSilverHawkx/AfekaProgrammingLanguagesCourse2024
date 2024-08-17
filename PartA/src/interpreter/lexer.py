@@ -1,5 +1,5 @@
 from .token import Token,TokenType,RESERVED_KEYWORDS
-from .errors import LexerError
+from .errors import LexerError,ErrorCode
 
 IS_ALPHABETIC = lambda char: char.isalpha()
 IS_ALPHANUMERIC = lambda char: char.isalnum()
@@ -37,7 +37,9 @@ class Lexer:
         or sequence in the input text.
         """
         raise LexerError(
-            "Lexer error on '{lexeme}' line: {lineno} column: {column}".format(
+            error_code=ErrorCode.UNEXPECTED_TOKEN,
+            token=None,
+            message="Lexer error on '{lexeme}' line: {lineno} column: {column}".format(
                 lexeme = self.current_char,
                 lineno= self.lineno,
                 column = self.column

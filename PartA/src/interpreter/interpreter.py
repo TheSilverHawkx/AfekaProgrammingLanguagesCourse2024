@@ -270,12 +270,12 @@ class Interpreter(NodeVisitor):
             ar[param_symbol.name] = self.visit(arg_node)
 
         self.call_stack.push(ar)
-        self.log_stack("ADDING AR TO STACK")
+        self.log_stack("ADDING FRAME TO STACK")
 
         current_ar['(return value)'] = self.visit(lambda_symbol.expr_ast)
 
         self.call_stack.pop()
-        self.log_stack("REMOVING AR FROM STACK")
+        self.log_stack("REMOVING FRAME FROM STACK")
 
         return current_ar['(return value)']
 
@@ -319,12 +319,12 @@ class Interpreter(NodeVisitor):
             ar[param_symbol.name] = self.visit(arg_node)
 
         self.call_stack.push(ar)
-        self.log_stack("ADDING AR TO STACK")
+        self.log_stack("ADDING FRAME TO STACK")
 
         current_ar['(return value)'] = self.visit(func_symbol.expr_ast)
 
         self.call_stack.pop()
-        self.log_stack("REMOVING AR FROM STACK")
+        self.log_stack("REMOVING FRAME FROM STACK")
 
         return current_ar['(return value)']
 
