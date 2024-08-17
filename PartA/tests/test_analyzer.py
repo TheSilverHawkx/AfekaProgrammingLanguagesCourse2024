@@ -162,6 +162,7 @@ def test_function_call_undeclared_variable():
 
 def test_lambda_declaration():
     lambd = _ast.Lambda(
+        token=None,
         formal_parameters=[_ast.Param(token=Token(type=TokenType.ID,value='x'))],
         expr_node=_ast.NoOp()
     )
@@ -193,6 +194,7 @@ def test_function_call_lambda():
     )
 
     lambd = _ast.Lambda(
+        token=None,
         formal_parameters=[param_y],
         expr_node=_ast.BinOp(
             param_y,

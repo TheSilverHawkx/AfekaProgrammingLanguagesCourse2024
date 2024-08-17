@@ -10,6 +10,8 @@
             "request": "launch",
             "program": "${workspaceFolder}\\src\\cli.py",
             "args": [
+                "--show-scope",
+                "--show-stack",
                 "parse",
                 "-f",
                 "examples\\1.lambda"
@@ -22,6 +24,8 @@
             "request": "launch",
             "program": "${workspaceFolder}\\src\\cli.py",
             "args": [
+                "--show-scope",
+                "--show-stack",
                 "prompt"
             ],
             "console": "integratedTerminal"

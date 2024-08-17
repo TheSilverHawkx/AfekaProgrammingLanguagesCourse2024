@@ -53,21 +53,23 @@ class ActivationRecord:
         self.members.update(kvp)
 
     def __str__(self):
-        lines = [
-            '{level}: {type} {name}'.format(
-                level=self.nesting_level,
-                type=self.type.value,
-                name=self.name,
-            )
-        ]
-        for name, val in self.members.items():
-            lines.append(f'   {name:<20}: {val}')
-
-        s = '\n'.join(lines)
-        return s
+        s  = [f'{"Activation Record":=^30}']
+        for header_name, header_value in (
+            ('Record name:', self.name),
+            ('Nesting level', self.nesting_level),
+            ('Record type:', self.type),
+        ):
+            s.append(f'{header_name:<15}: {header_value}')
+        
+        if len(self.members) > 0:
+            longest_key = max(len(x) for x in self.members.keys())
+            s.append('Members:')
+            s.extend([f'{k:>{longest_key}}: {str(v)}' for k,v in self.members.items() ])
+        s.append('-'*30)
+        return '\n'.join(s)
 
     def __repr__(self):
-        return self.__str__()
+        return f"{self.__class__.__name__}(name={self.name}, level={self.nesting_level}, type={self.type.value})"
     
 class CallStack:
     """Represents a call stack for managing activation records.
@@ -118,9 +120,22 @@ class CallStack:
         return self._records[-1]
     
     def __str__(self):
-        return 'CALL STACK\n{records}\n'.format(
-            records = '\n'.join(repr(ar) for ar in reversed(self._records))
-        )
+        stack_width=25
+
+        s = [
+            f'{"Call Stack": ^{stack_width+2}}\n',
+            f"|{" " * stack_width}|",
+            f"+{"─" * stack_width}+",
+        ]
+
+        for ar in reversed(self._records):
+            truncated_name = f"{ar.name[:stack_width - 11] + '...' if len(ar.name) > stack_width else ar.name}"
+            s.extend([
+                f"|{f"{truncated_name}":^{stack_width}}|",
+                f"|{f"{ar.type.value}":^{stack_width}}|",
+                f"+{"─" * stack_width}+",
+            ])
+        return "\n".join(s)
     
     def __repr__(self) -> str:
-        return self.__str__()
+        return f"{self.__class__.__name__}(depth={len(self._records)})"

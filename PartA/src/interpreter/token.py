@@ -119,11 +119,10 @@ class Token:
         self.column = column
 
     def __str__(self):
-        return 'Token({type}, {value}, position={lineno}:{column})'.format(
-            type=self.type,
-            value=repr(self.value),
-            lineno=self.lineno,
-            column=self.column,
-        )
+        position = ''
+        if self.lineno is not None and self.column is not None:
+            position = f', position={self.lineno}:{self.column}'
+        
+        return f'Token({self.type.name}, {repr(self.value)}{position})'
     
     __repr__ = __str__

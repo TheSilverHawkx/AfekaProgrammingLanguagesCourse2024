@@ -3,9 +3,7 @@ from pathlib import Path
 from os.path import exists,isfile
 import interpreter as intrprt
 
-def prompt():
-    interpreter = intrprt.Interpreter()
-    semantic_analyzer = intrprt.SemanticAnalyzer()
+def prompt(semantic_analyzer: intrprt.SemanticAnalyzer, interpreter: intrprt.Interpreter):
     root = intrprt.Program([])
 
     while True:
@@ -45,7 +43,7 @@ def prompt():
         except Exception as e:
             print(f"Error: {e}")
 
-def parse():
+def parse(semantic_analyzer: intrprt.SemanticAnalyzer, interpreter: intrprt.Interpreter):
     if not exists(args.input_file) or not isfile(args.input_file):
         print(f"Path '{args.input_file}' doesn't exist or is not a file")
         exit(-1)
@@ -56,23 +54,19 @@ def parse():
 
     content = open(args.input_file,'r').read()
 
-    lexer = intrprt.Lexer(content)
     try:
+        lexer = intrprt.Lexer(content)
         parser = intrprt.Parser(lexer)
         tree = parser.parse()
-        
-        semantic_analyzer = intrprt.SemanticAnalyzer() #args.scope
-        try:
-            semantic_analyzer.visit(tree)
-        except intrprt.SemanticError as e:
-            print(e.message)
-            exit(1)
+        semantic_analyzer.visit(tree)
 
-        interpreter = intrprt.Interpreter() #args.stack
         for output in interpreter.interpret(tree):
             print(output)
-    except (intrprt.LexerError, intrprt.ParserError) as e:
+    except (intrprt.LexerError,intrprt.SemanticError, intrprt.ParserError,intrprt.InterpreterError) as e:
         print(e.message)
+        exit(1)
+    except Exception as e:
+        print(e)
         exit(1)
 
 def configure_parameters() -> argparse.Namespace:
@@ -81,14 +75,16 @@ def configure_parameters() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        '--scope',
-        help='Print scope information',
+        '--show-scope',
+        help='Print scope information every time the scope changes',
         action='store_true',
+        dest='log_scope'
     )
     parser.add_argument(
-        '--stack',
-        help='Print call stack',
+        '--show-stack',
+        help='Print call stack every time the stack changes',
         action='store_true',
+        dest='log_stack'
     )
 
     subparsers = parser.add_subparsers(required=True, dest="mode")
@@ -112,4 +108,7 @@ def configure_parameters() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = configure_parameters()
-    args.func()
+
+    semantic_analyzer = intrprt.SemanticAnalyzer(args.log_scope)
+    interpreter = intrprt.Interpreter(args.log_stack)
+    args.func(semantic_analyzer,interpreter)

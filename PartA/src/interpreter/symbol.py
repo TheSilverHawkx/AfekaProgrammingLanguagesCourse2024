@@ -1,4 +1,5 @@
 from typing import Self
+from abc import ABCMeta
 
 class Symbol(object):
     """Represents a general symbol in the symbol table.
@@ -13,9 +14,19 @@ class Symbol(object):
     Usage:
         symbol = Symbol(name='x', type='INTEGER')
     """
-    def __init__(self, name, type=None) -> None:
+    def __init__(self, name, type: Self=None) -> None:
         self.name = name
         self.type = type
+    
+    def __str__(self):
+        return "{class_name}(name={symbol_name}{optional_type})".format(
+            class_name=self.__class__.__name__,
+            symbol_name= self.name,
+            optional_type=f", type={self.type}" if self.type is not None else ""
+        )
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
 class BuiltinTypeSymbol(Symbol):
     """Represents a built-in type symbol in the symbol table.
@@ -32,11 +43,6 @@ class BuiltinTypeSymbol(Symbol):
     def __init__(self, name, type=None) -> None:
         super().__init__(name)
 
-    def __str__(self) -> str:
-        return self.name
-    
-    __repr__ = __str__
-
 class ParamSymbol(Symbol):
     """Represents a parameter symbol in the symbol table.
 
@@ -51,15 +57,6 @@ class ParamSymbol(Symbol):
     """
     def __init__(self, name: str, type=BuiltinTypeSymbol):
         super().__init__(name, type)
-
-    def __str__(self):
-        return "<{class_name}(name='{name}', type='{type}')>".format(
-            class_name=self.__class__.__name__,
-            name=self.name,
-            type=self.type,
-        )
-
-    __repr__ = __str__
 
 class CallableSymbol(Symbol):
     """Represents a function / Lambda symbol in the symbol table.
@@ -84,13 +81,10 @@ class CallableSymbol(Symbol):
         self.expr_ast = None
 
     def __str__(self) -> str:
-        return '<{class_name}(name={name}, parameters={params})>'.format(
-            class_name=self.__class__.__name__,
-            name=self.name,
-            params=self.formal_params,
-        )
-
-    __repr__ = __str__
+        params_str = ", ".join(param.name for param in self.formal_params)
+        result = f"{self.__class__.__name__}(name={self.name}, parameters=[{params_str}])"
+                
+        return result
 
 class ScopedSymbolTable(object):
     """Represents a scoped symbol table for tracking symbols in various scopes.
@@ -125,8 +119,7 @@ class ScopedSymbolTable(object):
         self.insert(BuiltinTypeSymbol('FUNCTION'))
 
     def __str__(self):
-        h1 = 'SCOPE (SCOPED SYMBOL TABLE)'
-        lines = ['\n', h1, '=' * len(h1)]
+        s  = [f'{"Symbols Table":=^30}']
         for header_name, header_value in (
             ('Scope name', self.scope_name),
             ('Scope level', self.scope_level),
@@ -134,18 +127,18 @@ class ScopedSymbolTable(object):
              self.enclosing_scope.scope_name if self.enclosing_scope else None
             )
         ):
-            lines.append('%-15s: %s' % (header_name, header_value))
-        h2 = 'Scope (Scoped symbol table) contents'
-        lines.extend([h2, '-' * len(h2)])
-        lines.extend(
-            ('%7s: %r' % (key, value))
-            for key, value in self._symbols.items()
-        )
-        lines.append('\n')
-        s = '\n'.join(lines)
-        return s
+            s.append(f'{header_name:<15}: {header_value}')
+
+        if len(self._symbols) > 0:
+            longest_key = max(len(x) for x in self._symbols.keys())
+            s.append('Symbols:')
+            s.extend([f'{k:>{longest_key}}: {str(v)}' for k,v in self._symbols.items() ])
+            
+        s.append('-'*30)
+        return '\n'.join(s)
     
-    __repr__ = __str__
+    def __repr__(self):
+        return f"{self.__class__.__name__}(name={self.scope_name},level={self.scope_level}, enclosing_scope={self.enclosing_scope.scope_name})"
 
     def insert(self, symbol: Symbol) -> None:
         """

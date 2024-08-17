@@ -50,7 +50,7 @@ Next, when we a function is called, we create a new activation record for the fu
                 | name: Main Program   |
                 | level: 1             |
                 | context:             |
-                | { 'foo': <function>} |
+                | { 'foo': \<function>} |
                 +----------------------+
 
   </pre>

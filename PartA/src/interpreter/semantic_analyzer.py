@@ -26,14 +26,21 @@ class SemanticAnalyzer(NodeVisitor):
     checking for semantic errors such as undeclared variables, and incorrect function usage.
     It also manages the scoping of variables and functions.
     """
-    def __init__(self) -> None:
+    def __init__(self, log_scope = False) -> None:
         self.current_scope: ScopedSymbolTable = ScopedSymbolTable(
             scope_name='global',
             scope_level=1,
             enclosing_scope=None
         )
+        self.should_log = log_scope
 
         self.current_scope._init_builtins()
+
+    def log_scope(self,message:str = None):
+        if self.should_log:
+            if message is not None:
+                print(f"@ {message}")
+            print(self.current_scope)
 
     def error(self, error_code: ErrorCode, token: Token) -> None:
         """
@@ -111,7 +118,8 @@ class SemanticAnalyzer(NodeVisitor):
             enclosing_scope= self.current_scope
         )
 
-        self.current_scope = func_scope 
+        self.current_scope = func_scope
+        self.log_scope("ENTERING FUNCTION DECLARATION BODY")
 
         for param in node.formal_parameters:
             param_symbol = ParamSymbol(param.name,BuiltinTypeSymbol)
@@ -122,6 +130,7 @@ class SemanticAnalyzer(NodeVisitor):
         self.visit(node.expr_node)
 
         self.current_scope = self.current_scope.enclosing_scope
+        self.log_scope("EXITING FUNCTION DECLARATION BODY")
         func_symbol.expr_ast = node.expr_node
         node.symbol = func_symbol
 
@@ -178,6 +187,7 @@ class SemanticAnalyzer(NodeVisitor):
         )
 
         self.current_scope = lambda_scope 
+        self.log_scope("ENTERING LAMBDA DECLARATION BODY")
 
         for symbol in param_symbols:
             self.current_scope.insert(symbol)
@@ -185,6 +195,8 @@ class SemanticAnalyzer(NodeVisitor):
         self.visit(node.expr_node)
 
         self.current_scope = self.current_scope.enclosing_scope
+        self.log_scope("EXITING LAMBDA DECLARATION BODY")
+
         lambda_symbol.expr_ast = node.expr_node
         node.symbol = lambda_symbol
 

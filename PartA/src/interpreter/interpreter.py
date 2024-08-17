@@ -65,8 +65,16 @@ class Interpreter(NodeVisitor):
         interpreter = Interpreter()
         result = interpreter.interpret(ast_tree)
     """
-    def __init__(self) -> None:
+    def __init__(self, log_stack = False) -> None:
         self.call_stack = CallStack()
+        self.should_log = log_stack
+
+    def log_stack(self,message:str = None):
+        if self.should_log:
+            if message is not None:
+                print(f"@ {message}")
+            print(self.call_stack.peek())
+            print(self.call_stack)
 
     def error(self,error_code: ErrorCode, token: Token):
         raise InterpreterError(error_code,token)
@@ -87,6 +95,7 @@ class Interpreter(NodeVisitor):
         )
 
         self.call_stack.push(ar)
+        self.log_stack("ENTERING PROGRAM")
 
         for statement in node.statements:
             output = self.visit(statement)
@@ -245,6 +254,7 @@ class Interpreter(NodeVisitor):
             old_ar=current_ar
         )
         
+        
         lambda_symbol = node.lambda_node.symbol
 
         if lambda_symbol is None:
@@ -260,12 +270,14 @@ class Interpreter(NodeVisitor):
             ar[param_symbol.name] = self.visit(arg_node)
 
         self.call_stack.push(ar)
+        self.log_stack("ADDING AR TO STACK")
 
-        output = self.visit(lambda_symbol.expr_ast)
+        current_ar['(return value)'] = self.visit(lambda_symbol.expr_ast)
 
         self.call_stack.pop()
+        self.log_stack("REMOVING AR FROM STACK")
 
-        return output
+        return current_ar['(return value)']
 
     def visit_FunctionCall(self, node: FunctionCall):
         """Handles function call nodes.
@@ -286,8 +298,8 @@ class Interpreter(NodeVisitor):
             nesting_level=self.call_stack.peek().nesting_level +1,
             old_ar=current_ar
         )
-
-        func_symbol: CallableSymbol | None = current_ar[node.func_name]
+        
+        func_symbol: CallableSymbol | None = node.symbol or current_ar[node.func_name]
 
         if func_symbol is None:
             self.error(
@@ -307,12 +319,14 @@ class Interpreter(NodeVisitor):
             ar[param_symbol.name] = self.visit(arg_node)
 
         self.call_stack.push(ar)
+        self.log_stack("ADDING AR TO STACK")
 
-        output = self.visit(func_symbol.expr_ast)
+        current_ar['(return value)'] = self.visit(func_symbol.expr_ast)
 
         self.call_stack.pop()
+        self.log_stack("REMOVING AR FROM STACK")
 
-        return output
+        return current_ar['(return value)']
 
     def interpret(self,tree: AST):
         """Interprets the given AST.
