@@ -77,7 +77,10 @@ class Interpreter(NodeVisitor):
             print(self.call_stack)
 
     def error(self,error_code: ErrorCode, token: Token):
-        raise InterpreterError(error_code,token)
+        raise InterpreterError(
+            error_code=error_code,
+            token=token
+        )
 
     def visit_Program(self,node: Program):
         """Handles a Program node and executes all its statements.
@@ -125,7 +128,7 @@ class Interpreter(NodeVisitor):
                 return left_val and self.visit(node.right)
             case TokenType.OR:
                 if left_val:
-                    return True
+                    return left_val
                 else:
                     return self.visit(node.right)
             case TokenType.EQUAL:
@@ -147,7 +150,14 @@ class Interpreter(NodeVisitor):
             case TokenType.MUL:
                 return left_val * self.visit(node.right)
             case TokenType.DIV:
-                return left_val // self.visit(node.right)
+                right_val = self.visit(node.right)
+                if right_val == 0:
+                    self.error(
+                        error_code=ErrorCode.DIV_ZERO,
+                        token=node.token
+                    )
+                    
+                return left_val // right_val
             case TokenType.MODULO:
                 return left_val % self.visit(node.right)
 
