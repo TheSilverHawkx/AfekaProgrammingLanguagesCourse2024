@@ -96,7 +96,7 @@ class Lexer:
         if token.type == TokenType.EOF:
             return token
         
-        for i in range(0,n):
+        for i in range(1,n):
             token = self.get_next_token()
             
         self.pos = origin_pos
