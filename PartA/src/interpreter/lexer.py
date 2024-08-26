@@ -91,6 +91,11 @@ class Lexer:
         origin_lineo = self.lineno
         origin_column = self.column
 
+        token = self.get_next_token()
+
+        if token.type == TokenType.EOF:
+            return token
+        
         for i in range(0,n):
             token = self.get_next_token()
             

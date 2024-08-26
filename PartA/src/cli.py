@@ -40,6 +40,8 @@ def prompt(semantic_analyzer: intrprt.SemanticAnalyzer, interpreter: intrprt.Int
 
         except KeyboardInterrupt:
             return
+        except (intrprt.LexerError,intrprt.SemanticError, intrprt.ParserError,intrprt.InterpreterError) as e:
+            print(e.message)
         except Exception as e:
             print(f"Error: {e}")
 
