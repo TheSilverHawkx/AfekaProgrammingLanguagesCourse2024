@@ -31,6 +31,10 @@ To set up the project, follow these steps:
 
 ## Usage
 
+For the full list of options please run:
+```bash
+python3 src/cli.py --help
+```
 You can run the interpreter using cli.py in two modes:
 
 1. **Parse Mode**: Parses a file and performs syntax and semantic analysis.
@@ -77,7 +81,3 @@ pytest
 ```
 
 This will run all unit tests and end-to-end tests to ensure the interpreter works correctly.
-
-## Credits
-
-This project was developed as a final project for the Programming Languages course. Special thanks to our professor for designing the custom language and guiding us through the process.
