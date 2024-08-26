@@ -55,3 +55,4 @@ Next, when we a function is called, we create a new activation record for the fu
 
   </pre>
 </div>
+Lastly, after the `foo` function is done, the foo activation record is removed from the call stack and the output of the function is returned to the previous activation record which is `Main Program`.
